@@ -1,0 +1,11 @@
+development: true
+
+rabbitmq:
+  host: localhost
+  username: guest
+  password: guest
+
+mongodb:
+  uri: mongodb://localhost:27017
+
+port: 10004
