@@ -186,7 +186,9 @@ func (m *mongoRepository) GetCurrentLoginSession(ctx context.Context, playerId u
 	defer cancel()
 
 	var mongoResult model.LoginSession
-	err := m.sessionCollection.FindOne(ctx, bson.M{"playerId": playerId, "logoutTime": bson.M{"$type": "null"}}).Decode(&mongoResult)
+	err := m.sessionCollection.FindOne(ctx, bson.M{"$and": []bson.M{
+		{"playerId": playerId}, {"logoutTime": bson.M{"$exists": false}},
+	}}).Decode(&mongoResult)
 	if err != nil {
 		return nil, err
 	}

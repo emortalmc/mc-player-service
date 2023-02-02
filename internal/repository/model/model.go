@@ -25,7 +25,7 @@ type LoginSession struct {
 	Id       primitive.ObjectID `bson:"_id"`
 	PlayerId uuid.UUID          `bson:"playerId"`
 
-	LogoutTime *time.Time `bson:"logoutTime"`
+	LogoutTime *time.Time `bson:"logoutTime,omitempty"`
 }
 
 func (s *LoginSession) GetDuration() time.Duration {

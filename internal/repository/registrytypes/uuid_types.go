@@ -1,4 +1,4 @@
-// Package registry
+// Package registrytypes
 // taken from https://gist.github.com/SupaHam/3afe982dc75039356723600ccc91ff77
 package registrytypes
 
@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	UUIDType   = reflect.TypeOf(uuid.UUID{})
+	UUIDType    = reflect.TypeOf(uuid.UUID{})
 	uuidSubtype = byte(0x04)
 )
 
