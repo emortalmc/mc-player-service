@@ -11,7 +11,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"mc-player-service/internal/repository"
 	"mc-player-service/internal/repository/model"
-	"time"
 )
 
 const (
@@ -62,7 +61,7 @@ func (l *rabbitMqListener) listen(msgChan <-chan amqp091.Delivery) {
 				l.logger.Errorw("error unmarshaling PlayerConnectMessage", err)
 			}
 
-			err = l.handlePlayerConnect(msg)
+			err = l.handlePlayerConnect(d, msg)
 			if err != nil {
 				success = false
 			}
@@ -74,7 +73,7 @@ func (l *rabbitMqListener) listen(msgChan <-chan amqp091.Delivery) {
 				l.logger.Errorw("error unmarshaling PlayerDisconnectMessage", err)
 			}
 
-			err = l.handlePlayerDisconnect(msg)
+			err = l.handlePlayerDisconnect(d, msg)
 			if err != nil {
 				success = false
 			}
@@ -90,7 +89,7 @@ func (l *rabbitMqListener) listen(msgChan <-chan amqp091.Delivery) {
 	}
 }
 
-func (l *rabbitMqListener) handlePlayerConnect(message *common.PlayerConnectMessage) error {
+func (l *rabbitMqListener) handlePlayerConnect(d amqp091.Delivery, message *common.PlayerConnectMessage) error {
 	pId, err := uuid.Parse(message.PlayerId)
 	if err != nil {
 		l.logger.Errorw("error parsing player id", err)
@@ -104,8 +103,8 @@ func (l *rabbitMqListener) handlePlayerConnect(message *common.PlayerConnectMess
 		p = &model.Player{
 			Id:              pId,
 			CurrentUsername: message.PlayerUsername,
-			FirstLogin:      time.Now(),
-			LastOnline:      time.Now(),
+			FirstLogin:      d.Timestamp,
+			LastOnline:      d.Timestamp,
 			TotalPlaytime:   0,
 			CurrentlyOnline: true,
 		}
@@ -128,7 +127,7 @@ func (l *rabbitMqListener) handlePlayerConnect(message *common.PlayerConnectMess
 	}
 
 	session := &model.LoginSession{
-		Id:       primitive.NewObjectIDFromTimestamp(message.Timestamp.AsTime()),
+		Id:       primitive.NewObjectIDFromTimestamp(d.Timestamp),
 		PlayerId: pId,
 	}
 
@@ -140,7 +139,7 @@ func (l *rabbitMqListener) handlePlayerConnect(message *common.PlayerConnectMess
 
 	if updatedUsername {
 		dbUsername := &model.PlayerUsername{
-			Id:       primitive.NewObjectIDFromTimestamp(message.Timestamp.AsTime()),
+			Id:       primitive.NewObjectIDFromTimestamp(d.Timestamp),
 			PlayerId: pId,
 			Username: message.PlayerUsername,
 		}
@@ -155,22 +154,18 @@ func (l *rabbitMqListener) handlePlayerConnect(message *common.PlayerConnectMess
 	return nil
 }
 
-func (l *rabbitMqListener) handlePlayerDisconnect(message *common.PlayerDisconnectMessage) error {
+func (l *rabbitMqListener) handlePlayerDisconnect(d amqp091.Delivery, message *common.PlayerDisconnectMessage) error {
 	pId, err := uuid.Parse(message.PlayerId)
 	if err != nil {
 		l.logger.Errorw("error parsing player id", err)
 		return err
 	}
 
-	logoutTime := message.Timestamp.AsTime()
-
 	s, err := l.repo.GetCurrentLoginSession(context.TODO(), pId)
 	if err != nil {
 		l.logger.Errorw("error getting current login session", err)
 		return err
 	}
-
-	s.LogoutTime = &logoutTime
 
 	err = l.repo.UpdateLoginSession(context.TODO(), s)
 	if err != nil {
@@ -186,7 +181,7 @@ func (l *rabbitMqListener) handlePlayerDisconnect(message *common.PlayerDisconne
 
 	p.CurrentlyOnline = false
 	p.TotalPlaytime += s.GetDuration()
-	p.LastOnline = logoutTime
+	p.LastOnline = d.Timestamp
 
 	err = l.repo.SavePlayerWithUpsert(context.TODO(), p)
 	if err != nil {

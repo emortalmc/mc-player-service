@@ -3,7 +3,7 @@ module mc-player-service
 go 1.19
 
 require (
-	github.com/emortalmc/proto-specs v0.0.0-20230131164635-0207a28f1fc0
+	github.com/emortalmc/proto-specs v0.0.0-20230203205152-824c266162f6
 	github.com/google/uuid v1.3.0
 	github.com/rabbitmq/amqp091-go v1.6.0
 	github.com/spf13/viper v1.15.0

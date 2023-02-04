@@ -8,7 +8,6 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
 	"math/rand"
 	"mc-player-service/internal/config"
@@ -19,13 +18,18 @@ import (
 const (
 	connectMessageFlag    = "connect"
 	disconnectMessageFlag = "disconnect"
+
+	queueName = "mc-player:all"
 )
 
 var (
-	connect    = flag.Bool(connectMessageFlag, false, "publish a connect message")
-	disconnect = flag.Bool(disconnectMessageFlag, false, "publish a disconnect message")
-	period     = flag.Duration("period", 1*time.Second, "period to publish messages")
-	rate       = flag.Int("rate", 1, "number of messages to publish per period")
+	connect = flag.Bool(connectMessageFlag, false, "publish a connect message")
+
+	disconnect      = flag.Bool(disconnectMessageFlag, false, "publish a disconnect message")
+	disconnectDelay = flag.Duration("disconnect-delay", 5*time.Second, "delay between connect and disconnect")
+
+	period = flag.Duration("period", 1*time.Second, "period to publish messages")
+	rate   = flag.Int("rate", 1, "number of messages to publish per period")
 )
 
 func main() {
@@ -75,10 +79,16 @@ func main() {
 			}
 
 			if *disconnect {
-				err = publishDisconnectMessage(ch, pId)
-				if err != nil {
-					logger.Fatal("failed to publish disconnect message", err)
-				}
+				go func() {
+					if *disconnectDelay > 0 {
+						time.Sleep(*disconnectDelay)
+					}
+
+					err := publishDisconnectMessage(ch, pId)
+					if err != nil {
+						logger.Fatal("failed to publish disconnect message", err)
+					}
+				}()
 			}
 		}
 		logger.Info("published ", *rate, " messages at ", tick)
@@ -90,8 +100,8 @@ func main() {
 func publishConnectMessage(ch *amqp091.Channel, pId string, username string) error {
 	msg := &common.PlayerConnectMessage{
 		PlayerId:       pId,
+		ServerId:       "test-server-id",
 		PlayerUsername: username,
-		Timestamp:      timestamppb.Now(),
 	}
 
 	body, err := proto.Marshal(msg)
@@ -99,9 +109,10 @@ func publishConnectMessage(ch *amqp091.Channel, pId string, username string) err
 		return err
 	}
 
-	err = ch.PublishWithContext(context.Background(), "", "mc-player:all", false, false, amqp091.Publishing{
+	err = ch.PublishWithContext(context.Background(), "", queueName, false, false, amqp091.Publishing{
 		ContentType: "application/x-protobuf",
 		Type:        string(msg.ProtoReflect().Descriptor().FullName()),
+		Timestamp:   time.Now(),
 		Body:        body,
 	})
 	return err
@@ -109,8 +120,7 @@ func publishConnectMessage(ch *amqp091.Channel, pId string, username string) err
 
 func publishDisconnectMessage(ch *amqp091.Channel, pId string) error {
 	msg := &common.PlayerDisconnectMessage{
-		PlayerId:  pId,
-		Timestamp: timestamppb.Now(),
+		PlayerId: pId,
 	}
 
 	body, err := proto.Marshal(msg)
@@ -118,9 +128,10 @@ func publishDisconnectMessage(ch *amqp091.Channel, pId string) error {
 		return err
 	}
 
-	err = ch.PublishWithContext(context.Background(), "", "mc-player:all", false, false, amqp091.Publishing{
+	err = ch.PublishWithContext(context.Background(), "", queueName, false, false, amqp091.Publishing{
 		ContentType: "application/x-protobuf",
 		Type:        string(msg.ProtoReflect().Descriptor().FullName()),
+		Timestamp:   time.Now(),
 		Body:        body,
 	})
 	return err

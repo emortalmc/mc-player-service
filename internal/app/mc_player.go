@@ -39,11 +39,10 @@ func Run(ctx context.Context, cfg *config.Config, logger *zap.SugaredLogger) {
 
 	s := grpc.NewServer()
 	mcplayer.RegisterMcPlayerServer(s, service.NewMcPlayerService(repo))
-	logger.Infow("listening on port", "port", cfg.Port)
+	logger.Infow("listening for gRPC requests", "port", cfg.Port)
 
 	err = s.Serve(lis)
 	if err != nil {
 		logger.Fatalw("failed to serve", "error", err)
-		return
 	}
 }
