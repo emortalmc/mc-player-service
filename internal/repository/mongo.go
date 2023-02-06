@@ -128,7 +128,7 @@ func (m *mongoRepository) SearchPlayersByUsername(ctx context.Context, username 
 	// todo friend filters
 
 	page := int64(pageable.Page)
-	skip := (page - 1) * int64(pageable.Size)
+	skip := page * int64(pageable.Size)
 
 	var mongoResult []*model.Player
 	cursor, err := m.playerCollection.Find(ctx, query, options.Find().SetSkip(skip).SetLimit(int64(pageable.Size)))

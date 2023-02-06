@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/emortalmc/proto-specs/gen/go/grpc/mcplayer"
+	grpczap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/rabbitmq"
 	"mc-player-service/internal/rabbitmq/listener"
@@ -37,7 +40,15 @@ func Run(ctx context.Context, cfg *config.Config, logger *zap.SugaredLogger) {
 		logger.Fatalw("failed to listen", "error", err)
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		grpczap.UnaryServerInterceptor(logger.Desugar(), grpczap.WithLevels(func(code codes.Code) zapcore.Level {
+			if code != codes.Internal && code != codes.Unavailable && code != codes.Unknown {
+				return zapcore.DebugLevel
+			} else {
+				return zapcore.ErrorLevel
+			}
+		})),
+	))
 	mcplayer.RegisterMcPlayerServer(s, service.NewMcPlayerService(repo))
 	logger.Infow("listening for gRPC requests", "port", cfg.Port)
 

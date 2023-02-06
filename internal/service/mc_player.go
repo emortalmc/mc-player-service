@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	pb "github.com/emortalmc/proto-specs/gen/go/grpc/mcplayer"
+	"github.com/emortalmc/proto-specs/gen/go/model/common"
 	"github.com/emortalmc/proto-specs/gen/go/model/mcplayer"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"log"
 	"mc-player-service/internal/repository"
 	"mc-player-service/internal/repository/model"
 )
@@ -96,10 +98,26 @@ func (s *mcPlayerService) SearchPlayersByUsername(ctx context.Context, req *pb.S
 		Friends:    req.FilterMethod == pb.SearchPlayersByUsernameRequest_FRIENDS,
 	}
 
+	log.Printf("Searching for %s with filter %+v", req.SearchUsername, filter)
+	log.Printf("Pageable: %+v", req.Pageable)
+
+	if req.Pageable == nil {
+		req.Pageable = &common.Pageable{
+			Page: 0,
+			Size: 20,
+		}
+	} else if req.Pageable.Size == 0 {
+		req.Pageable.Size = 20
+	}
+
 	players, pageData, err := s.repo.SearchPlayersByUsername(ctx, req.SearchUsername, req.Pageable, filter)
+	log.Printf("err? %v", err)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Found %d players: %+v", len(players), players)
+	log.Printf("Page data: %+v", pageData)
 
 	var protoPlayers = make([]*mcplayer.McPlayer, len(players))
 	for i, p := range players {

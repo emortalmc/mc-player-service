@@ -20,6 +20,8 @@ const (
 	disconnectType = "emortal.message.PlayerDisconnectMessage"
 )
 
+var ignoredTypes = []string{"emortal.message.PlayerSwitchServerMessage"}
+
 type rabbitMqListener struct {
 	logger *zap.SugaredLogger
 	repo   repository.Repository
@@ -78,7 +80,17 @@ func (l *rabbitMqListener) listen(msgChan <-chan amqp091.Delivery) {
 				success = false
 			}
 		default:
-			l.logger.Errorw("unknown message type", "type", d.Type)
+			ignored := false
+			for _, t := range ignoredTypes {
+				if t == d.Type {
+					ignored = true
+					break
+				}
+			}
+
+			if !ignored {
+				l.logger.Warnw("unknown message type", "type", d.Type)
+			}
 		}
 		if success {
 			err := l.chann.Ack(d.DeliveryTag, false)
