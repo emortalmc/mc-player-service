@@ -167,17 +167,21 @@ func (m *mongoRepository) CreateLoginSession(ctx context.Context, session *model
 	return err
 }
 
-func (m *mongoRepository) UpdateLoginSession(ctx context.Context, session *model.LoginSession) error {
+func (m *mongoRepository) SetLoginSessionLogoutTime(ctx context.Context, playerId uuid.UUID, logoutTime time.Time) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	result, err := m.sessionCollection.UpdateByID(ctx, session.Id, bson.M{"$set": session})
+	result, err := m.sessionCollection.UpdateOne(ctx, bson.M{"$and": []bson.M{
+		{"playerId": playerId}, {"logoutTime": bson.M{"$exists": false}},
+	}}, bson.M{"$set": bson.M{"logoutTime": logoutTime}})
+
 	if err != nil {
 		return err
 	}
 	if result.MatchedCount == 0 {
 		return mongo.ErrNoDocuments
 	}
+
 	return nil
 }
 

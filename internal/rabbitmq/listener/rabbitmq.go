@@ -167,25 +167,27 @@ func (l *rabbitMqListener) handlePlayerConnect(d amqp091.Delivery, message *comm
 }
 
 func (l *rabbitMqListener) handlePlayerDisconnect(d amqp091.Delivery, message *common.PlayerDisconnectMessage) error {
+	ctx := context.TODO()
+
 	pId, err := uuid.Parse(message.PlayerId)
 	if err != nil {
 		l.logger.Errorw("error parsing player id", err)
 		return err
 	}
 
-	s, err := l.repo.GetCurrentLoginSession(context.TODO(), pId)
+	s, err := l.repo.GetCurrentLoginSession(ctx, pId)
 	if err != nil {
 		l.logger.Errorw("error getting current login session", err)
 		return err
 	}
 
-	err = l.repo.UpdateLoginSession(context.TODO(), s)
+	err = l.repo.SetLoginSessionLogoutTime(ctx, pId, d.Timestamp)
 	if err != nil {
 		l.logger.Errorw("error updating login session", err)
 		return err
 	}
 
-	p, err := l.repo.GetPlayer(context.TODO(), pId)
+	p, err := l.repo.GetPlayer(ctx, pId)
 	if err != nil {
 		l.logger.Errorw("error getting player", err)
 		return err
@@ -195,7 +197,7 @@ func (l *rabbitMqListener) handlePlayerDisconnect(d amqp091.Delivery, message *c
 	p.TotalPlaytime += s.GetDuration()
 	p.LastOnline = d.Timestamp
 
-	err = l.repo.SavePlayerWithUpsert(context.TODO(), p)
+	err = l.repo.SavePlayerWithUpsert(ctx, p)
 	if err != nil {
 		l.logger.Errorw("error saving player", err)
 		return err

@@ -5,6 +5,7 @@ import (
 	"github.com/emortalmc/proto-specs/gen/go/model/common"
 	"github.com/google/uuid"
 	"mc-player-service/internal/repository/model"
+	"time"
 )
 
 type Repository interface {
@@ -15,7 +16,7 @@ type Repository interface {
 	SearchPlayersByUsername(ctx context.Context, username string, pageable *common.Pageable, filter UsernameSearchFilter) ([]*model.Player, *common.PageData, error)
 
 	CreateLoginSession(ctx context.Context, session *model.LoginSession) error
-	UpdateLoginSession(ctx context.Context, session *model.LoginSession) error
+	SetLoginSessionLogoutTime(ctx context.Context, playerId uuid.UUID, logoutTime time.Time) error
 	GetCurrentLoginSession(ctx context.Context, playerId uuid.UUID) (*model.LoginSession, error)
 	GetLoginSessions(ctx context.Context, playerId uuid.UUID, pageable *common.Pageable) ([]*model.LoginSession, error)
 
