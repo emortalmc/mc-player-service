@@ -24,5 +24,5 @@ FROM alpine
 
 WORKDIR /app
 
-COPY --from=build /build/mc-player-service /build/run/config.yaml ./
+COPY --from=build /build/mc-player-service /build/run/ ./
 CMD ["./mc-player-service"]
