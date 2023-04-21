@@ -15,7 +15,7 @@ func (m *mongoRepository) GetPlayerBadges(ctx context.Context, playerId uuid.UUI
 	result := struct {
 		Badges []string `bson:"badges"`
 	}{}
-	opts := options.FindOne().SetProjection(bson.D{{"badges", 1}})
+	opts := options.FindOne().SetProjection(bson.M{"badges": 1})
 	if err := m.playerCollection.FindOne(ctx, bson.M{"_id": playerId}, opts).Decode(&result); err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (m *mongoRepository) GetActivePlayerBadge(ctx context.Context, playerId uui
 		ActiveBadge *string `bson:"activeBadge"`
 	}{}
 
-	opts := options.FindOne().SetProjection(bson.D{{"activeBadge", 1}})
+	opts := options.FindOne().SetProjection(bson.M{"activeBadge": 1})
 	if err := m.playerCollection.FindOne(ctx, bson.M{"_id": playerId}, opts).Decode(&result); err != nil {
 		return nil, err
 	}

@@ -50,10 +50,6 @@ github.com/cncf/udpa/go v0.0.0-20201120205902-5459f2c99403/go.mod h1:WmhPx2Nbnht
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/emortalmc/proto-specs v0.0.0-20230411181440-aa95bf6b593d h1:36T4VSxR1S3ljZeY7ioQyKl0IwXsI1j6h6ckE0MAnWU=
-github.com/emortalmc/proto-specs v0.0.0-20230411181440-aa95bf6b593d/go.mod h1:cg45UgpwJMltw/7o4hMp76PddXNRk1v/hdNtzesHZlw=
-github.com/emortalmc/proto-specs v0.0.0-20230421000740-b7f0f384da3a h1:w4ygVWXF1QOfbC7rWWPE8LRtr6adnseFRvvBaZhrQLE=
-github.com/emortalmc/proto-specs v0.0.0-20230421000740-b7f0f384da3a/go.mod h1:cg45UgpwJMltw/7o4hMp76PddXNRk1v/hdNtzesHZlw=
 github.com/emortalmc/proto-specs v0.0.0-20230421001029-ff5866a2c482 h1:A5ZD32eOXwso+2udK+qZLtEQPWcg6+fvBD298C2IKog=
 github.com/emortalmc/proto-specs v0.0.0-20230421001029-ff5866a2c482/go.mod h1:cg45UgpwJMltw/7o4hMp76PddXNRk1v/hdNtzesHZlw=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=

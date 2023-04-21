@@ -250,12 +250,12 @@ func (c *consumer) handlePlayerRolesUpdateMessage(m *permissionmsg.PlayerRolesUp
 	roleId := m.RoleId
 
 	var badge *config.Badge
-	for id, badge := range c.badges {
-		if badge.AutomaticGrants == nil || badge.AutomaticGrants.PermissionRole == nil {
+	for id, b := range c.badges {
+		if b.AutomaticGrants == nil || b.AutomaticGrants.PermissionRole == nil {
 			continue
 		}
 
-		if *badge.AutomaticGrants.PermissionRole == roleId {
+		if *b.AutomaticGrants.PermissionRole == roleId {
 			badge = c.badges[id]
 			break
 		}
