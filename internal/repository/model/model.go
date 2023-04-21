@@ -18,6 +18,12 @@ type Player struct {
 	LastOnline    time.Time     `bson:"lastOnline"`
 	TotalPlaytime time.Duration `bson:"totalPlaytime"`
 
+	// Badges IDs of the badges the player has
+	Badges []string `bson:"badges"`
+
+	// ActiveBadge ID of the badge the player has currently active (nil if none)
+	ActiveBadge *string `bson:"activeBadge,omitempty"`
+
 	CurrentlyOnline bool `bson:"currentlyOnline"`
 }
 

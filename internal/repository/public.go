@@ -21,6 +21,15 @@ type Repository interface {
 	GetLoginSessions(ctx context.Context, playerId uuid.UUID, pageable *common.Pageable) ([]*model.LoginSession, error)
 
 	CreatePlayerUsername(ctx context.Context, username *model.PlayerUsername) error
+
+	// Badges
+
+	GetPlayerBadges(ctx context.Context, playerId uuid.UUID) ([]string, error)
+	AddPlayerBadge(ctx context.Context, playerId uuid.UUID, badgeId string) (int64, error)
+	RemovePlayerBadge(ctx context.Context, playerId uuid.UUID, badgeId string) (int64, error)
+
+	GetActivePlayerBadge(ctx context.Context, playerId uuid.UUID) (*string, error)
+	SetActivePlayerBadge(ctx context.Context, playerId uuid.UUID, badgeId string) error
 }
 
 type UsernameSearchFilter struct {

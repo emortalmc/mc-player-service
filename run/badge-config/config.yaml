@@ -1,0 +1,162 @@
+badges:
+  emortal:
+    id: emortal
+    priority: 100
+    required: true
+    friendlyName: "Emortal"
+    chatCharacter: \uE005
+
+    hoverText:
+      - "<gold>Badge: <gradient:#c77800:#c400bd>Emortal</gradient></gold>"
+      - ""
+      - "<gold>A more important staff member of EmortalMC</gold>"
+
+    guiItem:
+      material: "minecraft:bedrock"
+      displayName: "<gradient:#c77800:#c400bd>Emortal</gradient>"
+      lore:
+        - "<gold>A more important staff member of EmortalMC</gold>"
+
+  staff:
+    id: staff
+    priority: 200
+    required: true
+    friendlyName: "Staff"
+    chatCharacter: \uE006
+
+    hoverText:
+      - "<gold>Badge: <dark_purple>Staff</dark_purple></gold>"
+      - ""
+      - "<gold>A staff member of EmortalMC</gold>"
+
+    guiItem:
+      material: "minecraft:bedrock"
+      displayName: "<dark_purple>Staff</dark_purple>"
+      lore:
+        - "<gold>A staff member of EmortalMC</gold>"
+
+  contributor_4:
+    id: contributor_4
+    priority: 300
+    required: false
+    friendlyName: "Contributor (x4)"
+    chatCharacter: \uE00A
+
+    hoverText:
+      - "<gold>Badge: <gradient:#c77800:#c400bd>Contributor (x4)</gradient></gold>"
+      - ""
+      - "<gold>Has 32 merged pull requests to EmortalMC repositories</gold>"
+
+    guiItem:
+      material: "minecraft:bedrock"
+      displayName: "<gradient:#c77800:#c400bd>Contributor (x4)</gradient>"
+      lore:
+        - "<gold>Has 32 merged pull requests to EmortalMC repositories</gold>"
+
+  contributor_3:
+    id: contributor_3
+    priority: 400
+    required: false
+    friendlyName: "Contributor (x3)"
+    chatCharacter: \uE009
+
+    hoverText:
+      - "<gold>Badge: <color:#c48300>Contributor (x3)</color></gold>"
+      - ""
+      - "<gold>Has 16 merged pull requests to EmortalMC repositories</gold>"
+
+    guiItem:
+      material: "minecraft:bedrock"
+      displayName: "<color:#c48300>Contributor (x3)</color>"
+      lore:
+        - "<gold>Has 16 merged pull requests to EmortalMC repositories</gold>"
+
+  contributor_2:
+    id: contributor_2
+    priority: 500
+    required: false
+    friendlyName: "Contributor (x2)"
+    chatCharacter: \uE008
+
+    hoverText:
+      - "<gold>Badge: <color:#bababa>Contributor (x2)</color></gold>"
+      - ""
+      - "<gold>Has 8 merged pull requests to EmortalMC repositories</gold>"
+
+    guiItem:
+      material: "minecraft:bedrock"
+      displayName: "<color:#bababa>Contributor (x2)</color>"
+      lore:
+        - "<gold>Has 8 merged pull requests to EmortalMC repositories</gold>"
+
+  contributor_1:
+    id: contributor_1
+    priority: 600
+    required: false
+    friendlyName: "Contributor (x1)"
+    chatCharacter: \uE007
+
+    hoverText:
+      - "<gold>Badge: <color:#cd7f32>Contributor (x1)</color></gold>"
+      - ""
+      - "<gold>Has 2 merged pull requests to EmortalMC repositories</gold>"
+
+    guiItem:
+      material: "minecraft:bedrock"
+      displayName: "<color:#cd7f32>Contributor (x1)</color>"
+      lore:
+        - "<gold>Has 2 merged pull requests to EmortalMC repositories</gold>"
+
+  cool:
+    id: cool
+    priority: 700
+    required: false
+    friendlyName: "Cool"
+    chatCharacter: \uE00B
+
+    hoverText:
+      - "<gold>Badge: <black>Cool</black></gold>"
+      - ""
+      - "<gold>Is cool</gold>"
+
+    guiItem:
+      material: "minecraft:bedrock"
+      displayName: "<black>Cool</black>"
+      lore:
+        - "<gold>Is cool</gold>"
+
+  birthday_23:
+    id: birthday_23
+    priority: 750
+    required: false
+    friendlyName: "Birthday 2023"
+    chatCharacter: \uE00C
+
+    hoverText:
+      - "<gold>Badge: <light_purple>Birthday 2023</light_purple></gold>"
+      - ""
+      - "<gold>Joined during the 2023 birthday event</gold>"
+
+    guiItem:
+      material: "minecraft:bedrock"
+      displayName: "<light_purple>Birthday 2023</light_purple>"
+      lore:
+        - "<gold>Joined during the 2023 birthday event</gold>"
+
+  loser:
+    id: loser
+    priority: 800
+    required: true
+    friendlyName: "Absolute Loser"
+    chatCharacter: \uE00D
+
+    hoverText:
+      - "<gold>Badge: <color:#7b5c00>Absolute Loser</color></gold>"
+      - ""
+      - "<gold>Someone with this rank is an absolute loser and is not to be spoken to</gold>"
+
+    guiItem:
+      material: "minecraft:bedrock"
+      displayName: "<color:#7b5c00>Absolute Loser</color>"
+      lore:
+        - "<gold>Someone with this rank is an absolute loser and is not to be spoken to</gold>"

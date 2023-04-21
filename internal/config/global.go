@@ -6,21 +6,21 @@ import (
 )
 
 type Config struct {
-	RabbitMQ    RabbitMQConfig `yaml:"rabbitmq"`
-	MongoDB     MongoDBConfig  `yaml:"mongodb"`
-	Development bool           `yaml:"debug"`
+	Kafka   *KafkaConfig
+	MongoDB *MongoDBConfig
 
-	Port uint16 `yaml:"port"`
+	Development bool
+
+	Port uint16
 }
 
-type RabbitMQConfig struct {
-	Host     string `yaml:"host"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+type KafkaConfig struct {
+	Host string
+	Port int
 }
 
 type MongoDBConfig struct {
-	URI string `yaml:"uri"`
+	URI string
 }
 
 func LoadGlobalConfig() (config *Config, err error) {

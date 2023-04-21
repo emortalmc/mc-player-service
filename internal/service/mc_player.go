@@ -15,6 +15,7 @@ import (
 	"log"
 	"mc-player-service/internal/repository"
 	"mc-player-service/internal/repository/model"
+	"mc-player-service/internal/utils"
 )
 
 type mcPlayerService struct {
@@ -104,26 +105,22 @@ func (s *mcPlayerService) SearchPlayersByUsername(ctx context.Context, req *pb.S
 	if req.Pageable == nil {
 		req.Pageable = &common.Pageable{
 			Page: 0,
-			Size: 20,
+			Size: utils.PointerOf(uint64(20)),
 		}
-	} else if req.Pageable.Size == 0 {
-		req.Pageable.Size = 20
+	} else if req.Pageable.Size == nil || *req.Pageable.Size == 0 {
+		req.Pageable.Size = utils.PointerOf(uint64(20))
 	}
 
 	players, pageData, err := s.repo.SearchPlayersByUsername(ctx, req.SearchUsername, req.Pageable, filter)
-	log.Printf("err? %v", err)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error searching for players: %w", err)
 	}
-
-	log.Printf("Found %d players: %+v", len(players), players)
-	log.Printf("Page data: %+v", pageData)
 
 	var protoPlayers = make([]*mcplayer.McPlayer, len(players))
 	for i, p := range players {
 		protoPlayers[i], err = s.createMcPlayerFromPlayer(ctx, p)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error creating player proto: %w", err)
 		}
 	}
 
