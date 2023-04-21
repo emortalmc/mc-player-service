@@ -4,7 +4,7 @@ badges:
     priority: 100
     required: true
     friendlyName: "Emortal"
-    chatCharacter: \uE005
+    chatCharacter: "\uE005"
 
     hoverText:
       - "<gold>Badge: <gradient:#c77800:#c400bd>Emortal</gradient></gold>"
@@ -22,7 +22,7 @@ badges:
     priority: 200
     required: true
     friendlyName: "Staff"
-    chatCharacter: \uE006
+    chatCharacter: "\uE006"
 
     hoverText:
       - "<gold>Badge: <dark_purple>Staff</dark_purple></gold>"
@@ -40,7 +40,7 @@ badges:
     priority: 300
     required: false
     friendlyName: "Contributor (x4)"
-    chatCharacter: \uE00A
+    chatCharacter: "\uE00A"
 
     hoverText:
       - "<gold>Badge: <gradient:#c77800:#c400bd>Contributor (x4)</gradient></gold>"
@@ -58,7 +58,7 @@ badges:
     priority: 400
     required: false
     friendlyName: "Contributor (x3)"
-    chatCharacter: \uE009
+    chatCharacter: "\uE009"
 
     hoverText:
       - "<gold>Badge: <color:#c48300>Contributor (x3)</color></gold>"
@@ -76,7 +76,7 @@ badges:
     priority: 500
     required: false
     friendlyName: "Contributor (x2)"
-    chatCharacter: \uE008
+    chatCharacter: "\uE008"
 
     hoverText:
       - "<gold>Badge: <color:#bababa>Contributor (x2)</color></gold>"
@@ -94,7 +94,7 @@ badges:
     priority: 600
     required: false
     friendlyName: "Contributor (x1)"
-    chatCharacter: \uE007
+    chatCharacter: "\uE007"
 
     hoverText:
       - "<gold>Badge: <color:#cd7f32>Contributor (x1)</color></gold>"
@@ -112,7 +112,7 @@ badges:
     priority: 700
     required: false
     friendlyName: "Cool"
-    chatCharacter: \uE00B
+    chatCharacter: "\uE00B"
 
     hoverText:
       - "<gold>Badge: <black>Cool</black></gold>"
@@ -130,7 +130,7 @@ badges:
     priority: 750
     required: false
     friendlyName: "Birthday 2023"
-    chatCharacter: \uE00C
+    chatCharacter: "\uE00C"
 
     hoverText:
       - "<gold>Badge: <light_purple>Birthday 2023</light_purple></gold>"
@@ -148,7 +148,7 @@ badges:
     priority: 800
     required: true
     friendlyName: "Absolute Loser"
-    chatCharacter: \uE00D
+    chatCharacter: "\uE00D"
 
     hoverText:
       - "<gold>Badge: <color:#7b5c00>Absolute Loser</color></gold>"
