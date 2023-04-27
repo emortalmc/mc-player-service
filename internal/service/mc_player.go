@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"log"
 	"mc-player-service/internal/repository"
 	"mc-player-service/internal/repository/model"
 	"mc-player-service/internal/utils"
@@ -58,14 +57,14 @@ func (s *mcPlayerService) GetPlayers(ctx context.Context, req *pb.GetPlayersRequ
 
 	players, err := s.repo.GetPlayers(ctx, ids)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get players: %w", err)
 	}
 
 	var protoPlayers = make([]*mcplayer.McPlayer, len(players))
 	for i, p := range players {
 		protoPlayers[i], err = s.createMcPlayer(ctx, p.Id)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error creating player proto: %w", err)
 		}
 	}
 
@@ -85,7 +84,7 @@ func (s *mcPlayerService) GetPlayerByUsername(ctx context.Context, req *pb.Playe
 
 	mcPlayer, err := s.createMcPlayer(ctx, p.Id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating player proto: %w", err)
 	}
 
 	return &pb.GetPlayerByUsernameResponse{
@@ -98,9 +97,6 @@ func (s *mcPlayerService) SearchPlayersByUsername(ctx context.Context, req *pb.S
 		OnlineOnly: req.FilterMethod == pb.SearchPlayersByUsernameRequest_ONLINE,
 		Friends:    req.FilterMethod == pb.SearchPlayersByUsernameRequest_FRIENDS,
 	}
-
-	log.Printf("Searching for %s with filter %+v", req.SearchUsername, filter)
-	log.Printf("Pageable: %+v", req.Pageable)
 
 	if req.Pageable == nil {
 		req.Pageable = &common.Pageable{
@@ -138,7 +134,7 @@ func (s *mcPlayerService) GetLoginSessions(ctx context.Context, req *pb.GetLogin
 
 	sessions, err := s.repo.GetLoginSessions(ctx, pId, req.Pageable)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting login sessions: %w", err)
 	}
 
 	var protoSessions = make([]*mcplayer.LoginSession, len(sessions))
@@ -169,7 +165,7 @@ func (s *mcPlayerService) createMcPlayerFromPlayer(ctx context.Context, p *model
 	if p.CurrentlyOnline {
 		session, err := s.repo.GetCurrentLoginSession(ctx, p.Id)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error getting current login session: %w", err)
 		}
 		sessionProto = session.ToProto()
 	}

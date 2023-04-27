@@ -19,7 +19,7 @@ type Player struct {
 	TotalPlaytime time.Duration `bson:"totalPlaytime"`
 
 	// Badges IDs of the badges the player has
-	Badges []string `bson:"badges"`
+	Badges []string `bson:"badges,omitempty"`
 
 	// ActiveBadge ID of the badge the player has currently active (nil if none)
 	ActiveBadge *string `bson:"activeBadge,omitempty"`
