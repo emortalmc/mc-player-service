@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	pb "github.com/emortalmc/proto-specs/gen/go/grpc/badge"
-	pbmodel "github.com/emortalmc/proto-specs/gen/go/models/badge"
+	pbmodel "github.com/emortalmc/proto-specs/gen/go/model/badge"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,7 +18,7 @@ type badgeService struct {
 	badgeCfg *config.BadgeConfig
 }
 
-func NewBadgeService(repo repository.Repository, badgeCfg *config.BadgeConfig) pb.BadgeManagerServer {
+func newBadgeService(repo repository.Repository, badgeCfg *config.BadgeConfig) pb.BadgeManagerServer {
 	return &badgeService{
 		repo:     repo,
 		badgeCfg: badgeCfg,
@@ -69,6 +69,8 @@ func (s *badgeService) RemoveBadgeFromPlayer(ctx context.Context, request *pb.Re
 	if changeCount == 0 {
 		return nil, removeBadgeFromPlayerDoesntHaveBadgeErr
 	}
+
+	// TODO recalculate active badge if necessary
 
 	return &pb.RemoveBadgeFromPlayerResponse{}, nil
 }

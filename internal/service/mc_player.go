@@ -24,7 +24,7 @@ type mcPlayerService struct {
 	repo repository.Repository
 }
 
-func NewMcPlayerService(repo repository.Repository) pb.McPlayerServer {
+func newMcPlayerService(repo repository.Repository) pb.McPlayerServer {
 	return &mcPlayerService{
 		repo: repo,
 	}

@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/emortalmc/proto-specs/gen/go/message/common"
-	permissionmsg "github.com/emortalmc/proto-specs/gen/go/message/permission"
+	permmsg "github.com/emortalmc/proto-specs/gen/go/message/permission"
+	"github.com/emortalmc/proto-specs/gen/go/nongenerated/kafkautils"
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -14,6 +15,8 @@ import (
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/repository"
 	"mc-player-service/internal/repository/model"
+	"sync"
+	"time"
 )
 
 const connectionsTopic = "mc-connections"
@@ -25,23 +28,25 @@ type consumer struct {
 
 	badges map[string]*config.Badge
 
-	connectionsReader *kafka.Reader
-	permissionsReader *kafka.Reader
+	reader *kafka.Reader
 }
 
-func NewConsumer(config *config.KafkaConfig, logger *zap.SugaredLogger, repo repository.Repository,
+func NewConsumer(ctx context.Context, wg *sync.WaitGroup, config *config.KafkaConfig, logger *zap.SugaredLogger, repo repository.Repository,
 	badgeCfg *config.BadgeConfig) {
 
-	connectionsReader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{fmt.Sprintf("%s:%d", config.Host, config.Port)},
-		GroupID: "matchmaker",
-		Topic:   connectionsTopic,
-	})
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:     []string{fmt.Sprintf("%s:%d", config.Host, config.Port)},
+		GroupID:     "mc-player-service",
+		GroupTopics: []string{connectionsTopic, permissionsTopic},
 
-	permissionsReader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{fmt.Sprintf("%s:%d", config.Host, config.Port)},
-		GroupID: "matchmaker",
-		Topic:   permissionsTopic,
+		Logger: kafka.LoggerFunc(func(format string, args ...interface{}) {
+			logger.Infow(fmt.Sprintf(format, args...))
+		}),
+		ErrorLogger: kafka.LoggerFunc(func(format string, args ...interface{}) {
+			logger.Errorw(fmt.Sprintf(format, args...))
+		}),
+
+		MaxWait: 5 * time.Second,
 	})
 
 	c := &consumer{
@@ -50,73 +55,36 @@ func NewConsumer(config *config.KafkaConfig, logger *zap.SugaredLogger, repo rep
 
 		badges: badgeCfg.Badges,
 
-		connectionsReader: connectionsReader,
-		permissionsReader: permissionsReader,
+		reader: reader,
 	}
 
-	logger.Infow("listening for connections", "topic", connectionsTopic)
-	go c.consumeConnections()
-	logger.Infow("listening for permission changes", "topic", connectionsTopic)
-	go c.consumerPermissions()
+	handler := kafkautils.NewConsumerHandler(logger, reader)
+	handler.RegisterHandler(&common.PlayerConnectMessage{}, c.handlePlayerConnectMessage)
+	handler.RegisterHandler(&common.PlayerDisconnectMessage{}, c.handlePlayerDisconnectMessage)
+	handler.RegisterHandler(&permmsg.PlayerRolesUpdateMessage{}, c.handlePlayerRolesUpdateMessage)
+
+	logger.Infow("starting listening for kafka messages", "topics", reader.Config().GroupTopics)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		handler.Run(ctx) // Run is blocking until the context is cancelled
+		if err := reader.Close(); err != nil {
+			logger.Errorw("error closing kafka reader", "error", err)
+		}
+	}()
 }
 
-func (c *consumer) consumeConnections() {
-	for {
-		m, err := c.connectionsReader.ReadMessage(context.TODO())
-		if err != nil {
-			c.logger.Errorw("failed to read message", "error", err)
-			continue
-		}
+func (c *consumer) handlePlayerConnectMessage(ctx context.Context, kafkaM *kafka.Message, uncastMsg proto.Message) {
+	m := uncastMsg.(*common.PlayerConnectMessage)
 
-		protoType, err := parseProtoType(m.Headers)
-		if err != nil {
-			c.logger.Errorw("failed to parse proto type", "error", err, "offset", m.Offset, "headers", m.Headers)
-			continue
-		}
-
-		switch protoType {
-		case string((&common.PlayerConnectMessage{}).ProtoReflect().Descriptor().FullName()):
-			parsedMsg := &common.PlayerConnectMessage{}
-
-			err = proto.Unmarshal(m.Value, parsedMsg)
-			if err != nil {
-				err = fmt.Errorf("failed to unmarshal message: %w", err)
-				break
-			}
-
-			err = c.handlePlayerConnectMessage(&m, parsedMsg)
-		case string((&common.PlayerDisconnectMessage{}).ProtoReflect().Descriptor().FullName()):
-			parsedMsg := &common.PlayerDisconnectMessage{}
-
-			err = proto.Unmarshal(m.Value, parsedMsg)
-			if err != nil {
-				err = fmt.Errorf("failed to unmarshal message: %w", err)
-				break
-			}
-
-			err = c.handlePlayerDisconnectMessage(&m, parsedMsg)
-		default:
-			return
-		}
-
-		if err != nil {
-			c.logger.Errorw("failed to handle message",
-				"error", err,
-				"type", protoType,
-				"offset", m.Offset,
-				"headers", m.Headers,
-			)
-		}
-	}
-}
-
-func (c *consumer) handlePlayerConnectMessage(kafkaM *kafka.Message, m *common.PlayerConnectMessage) error {
 	pId, err := uuid.Parse(m.PlayerId)
 	if err != nil {
-		return fmt.Errorf("error parsing player id: %w", err)
+		c.logger.Errorw("error parsing player id", "error", err)
+		return
 	}
 
-	p, err := c.repo.GetPlayer(context.TODO(), pId)
+	p, err := c.repo.GetPlayer(ctx, pId)
 	updatedUsername := false
 
 	if err != nil && err == mongo.ErrNoDocuments {
@@ -130,7 +98,8 @@ func (c *consumer) handlePlayerConnectMessage(kafkaM *kafka.Message, m *common.P
 		}
 		updatedUsername = true
 	} else if err != nil {
-		return fmt.Errorf("error getting player: %w", err)
+		c.logger.Errorw("error getting player", "error", err)
+		return
 	} else {
 		if p.CurrentUsername != m.PlayerUsername {
 			p.CurrentUsername = m.PlayerUsername
@@ -139,9 +108,10 @@ func (c *consumer) handlePlayerConnectMessage(kafkaM *kafka.Message, m *common.P
 		p.CurrentlyOnline = true
 	}
 
-	err = c.repo.SavePlayerWithUpsert(context.TODO(), p)
+	err = c.repo.SavePlayerWithUpsert(ctx, p)
 	if err != nil {
-		return fmt.Errorf("error saving player: %w", err)
+		c.logger.Errorw("error saving player", "error", err)
+		return
 	}
 
 	session := &model.LoginSession{
@@ -149,9 +119,9 @@ func (c *consumer) handlePlayerConnectMessage(kafkaM *kafka.Message, m *common.P
 		PlayerId: pId,
 	}
 
-	err = c.repo.CreateLoginSession(context.TODO(), session)
+	err = c.repo.CreateLoginSession(ctx, session)
 	if err != nil {
-		return fmt.Errorf("error creating login session: %w", err)
+		c.logger.Errorw("error creating login session", "error", err)
 	}
 
 	if updatedUsername {
@@ -161,92 +131,53 @@ func (c *consumer) handlePlayerConnectMessage(kafkaM *kafka.Message, m *common.P
 			Username: m.PlayerUsername,
 		}
 
-		err = c.repo.CreatePlayerUsername(context.TODO(), dbUsername)
+		err = c.repo.CreatePlayerUsername(ctx, dbUsername)
 		if err != nil {
-			return fmt.Errorf("error creating player username: %w", err)
+			c.logger.Errorw("error creating player username", "error", err)
 		}
 	}
-
-	return nil
 }
 
-func (c *consumer) handlePlayerDisconnectMessage(kafkaM *kafka.Message, m *common.PlayerDisconnectMessage) error {
-	ctx := context.TODO()
+func (c *consumer) handlePlayerDisconnectMessage(ctx context.Context, kafkaMsg *kafka.Message, uncastMsg proto.Message) {
+	m := uncastMsg.(*common.PlayerDisconnectMessage)
 
 	pId, err := uuid.Parse(m.PlayerId)
 	if err != nil {
-		return fmt.Errorf("error parsing player id: %w", err)
+		c.logger.Errorw("error parsing player id", "error", err)
+		return
 	}
 
 	s, err := c.repo.GetCurrentLoginSession(ctx, pId)
 	if err != nil {
-		return fmt.Errorf("error getting current login session: %w", err)
+		c.logger.Errorw("error getting current login session", "error", err)
+		return
 	}
 
-	err = c.repo.SetLoginSessionLogoutTime(ctx, pId, kafkaM.Time)
+	err = c.repo.SetLoginSessionLogoutTime(ctx, pId, kafkaMsg.Time)
 	if err != nil {
-		return fmt.Errorf("error updating login session: %w", err)
+		c.logger.Errorw("error setting logout time", "error", err)
+		return
 	}
 
 	p, err := c.repo.GetPlayer(ctx, pId)
 	if err != nil {
-		return fmt.Errorf("error getting player: %w", err)
+		c.logger.Errorw("error getting player", "error", err)
+		return
 	}
 
 	p.CurrentlyOnline = false
 	p.TotalPlaytime += s.GetDuration()
-	p.LastOnline = kafkaM.Time
+	p.LastOnline = kafkaMsg.Time
 
-	err = c.repo.SavePlayerWithUpsert(ctx, p)
-	if err != nil {
-		return fmt.Errorf("error saving player: %w", err)
-	}
-
-	return nil
-}
-
-func (c *consumer) consumerPermissions() {
-	for {
-		m, err := c.permissionsReader.ReadMessage(context.TODO())
-		if err != nil {
-			c.logger.Errorw("failed to read message", "error", err)
-			continue
-		}
-
-		protoType, err := parseProtoType(m.Headers)
-		if err != nil {
-			c.logger.Errorw("failed to parse proto type", "error", err, "offset", m.Offset, "headers", m.Headers)
-			continue
-		}
-
-		switch protoType {
-		case string((&permissionmsg.PlayerRolesUpdateMessage{}).ProtoReflect().Descriptor().FullName()):
-			parsedMsg := &permissionmsg.PlayerRolesUpdateMessage{}
-
-			err = proto.Unmarshal(m.Value, parsedMsg)
-			if err != nil {
-				err = fmt.Errorf("failed to unmarshal message: %w", err)
-				break
-			}
-
-			err = c.handlePlayerRolesUpdateMessage(parsedMsg)
-		default:
-			return
-		}
-
-		if err != nil {
-			c.logger.Errorw("failed to handle message",
-				"error", err,
-				"type", protoType,
-				"offset", m.Offset,
-				"headers", m.Headers,
-			)
-		}
+	if err := c.repo.SavePlayerWithUpsert(ctx, p); err != nil {
+		c.logger.Errorw("error saving player", "error", err)
+		return
 	}
 }
 
 // TODO handle a change if the role priority changes
-func (c *consumer) handlePlayerRolesUpdateMessage(m *permissionmsg.PlayerRolesUpdateMessage) error {
+func (c *consumer) handlePlayerRolesUpdateMessage(ctx context.Context, kafkaMsg *kafka.Message, uncastMsg proto.Message) {
+	m := uncastMsg.(*permmsg.PlayerRolesUpdateMessage)
 	roleId := m.RoleId
 
 	var badge *config.Badge
@@ -263,27 +194,16 @@ func (c *consumer) handlePlayerRolesUpdateMessage(m *permissionmsg.PlayerRolesUp
 
 	playerId, err := uuid.Parse(m.PlayerId)
 	if err != nil {
-		return fmt.Errorf("error parsing player id: %w", err)
+		c.logger.Errorw("error parsing player id", "error", err)
 	}
 
 	switch m.ChangeType {
-	case permissionmsg.PlayerRolesUpdateMessage_ADD:
-		_, err = c.repo.AddPlayerBadge(context.TODO(), playerId, badge.Id)
-	case permissionmsg.PlayerRolesUpdateMessage_REMOVE:
-		_, err = c.repo.RemovePlayerBadge(context.TODO(), playerId, badge.Id)
+	case permmsg.PlayerRolesUpdateMessage_ADD:
+		_, err = c.repo.AddPlayerBadge(ctx, playerId, badge.Id)
+	case permmsg.PlayerRolesUpdateMessage_REMOVE:
+		_, err = c.repo.RemovePlayerBadge(ctx, playerId, badge.Id)
 	}
 	if err != nil {
-		return fmt.Errorf("error updating player badges (action: %s): %w", m.ChangeType, err)
+		c.logger.Errorw("error updating player badges", "error", err)
 	}
-
-	return nil
-}
-
-func parseProtoType(headers []kafka.Header) (string, error) {
-	for _, header := range headers {
-		if header.Key == "X-Proto-Type" {
-			return string(header.Value), nil
-		}
-	}
-	return "", fmt.Errorf("no proto type found in message headers")
 }

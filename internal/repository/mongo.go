@@ -6,8 +6,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/repository/registrytypes"
+	"sync"
 )
 
 const (
@@ -26,19 +28,30 @@ type mongoRepository struct {
 	usernameCollection *mongo.Collection
 }
 
-func NewMongoRepository(ctx context.Context, cfg *config.MongoDBConfig) (Repository, error) {
+func NewMongoRepository(ctx context.Context, logger *zap.SugaredLogger, wg *sync.WaitGroup, cfg *config.MongoDBConfig) (Repository, error) {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.URI).SetRegistry(createCodecRegistry()))
 	if err != nil {
 		return nil, err
 	}
 
 	database := client.Database(databaseName)
-	return &mongoRepository{
+	repo := &mongoRepository{
 		database:           database,
 		playerCollection:   database.Collection(playerCollectionName),
 		sessionCollection:  database.Collection(sessionCollectionName),
 		usernameCollection: database.Collection(usernameCollectionName),
-	}, nil
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-ctx.Done()
+		if err := client.Disconnect(ctx); err != nil {
+			logger.Errorw("failed to disconnect from mongo", err)
+		}
+	}()
+
+	return repo, nil
 }
 
 func createCodecRegistry() *bsoncodec.Registry {

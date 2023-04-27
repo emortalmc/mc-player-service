@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"go.uber.org/zap"
 	"log"
 	"mc-player-service/internal/app"
@@ -20,9 +19,7 @@ func main() {
 	}
 	logger := unsugared.Sugar()
 
-	ctx := context.Background()
-
-	app.Run(ctx, cfg, logger)
+	app.Run(cfg, logger)
 }
 
 func createLogger(cfg *config.Config) (logger *zap.Logger, err error) {

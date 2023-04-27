@@ -2,55 +2,43 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"github.com/emortalmc/proto-specs/gen/go/grpc/badge"
-	"github.com/emortalmc/proto-specs/gen/go/grpc/mcplayer"
-	grpczap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/kafka"
 	"mc-player-service/internal/repository"
 	"mc-player-service/internal/service"
-	"net"
+	"os/signal"
+	"sync"
+	"syscall"
 )
 
-func Run(ctx context.Context, cfg *config.Config, logger *zap.SugaredLogger) {
+func Run(cfg *config.Config, logger *zap.SugaredLogger) {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+	wg := &sync.WaitGroup{}
+
 	badgeCfg, err := config.LoadBadgeConfig()
 	if err != nil {
 		logger.Fatalw("failed to load badge config", err)
 	}
 	logger.Infow("loaded badge config", "badgeCount", len(badgeCfg.Badges))
 
-	repo, err := repository.NewMongoRepository(ctx, cfg.MongoDB)
+	repoWg := &sync.WaitGroup{}
+	repoCtx, repoCancel := context.WithCancel(ctx)
+
+	repo, err := repository.NewMongoRepository(repoCtx, logger, repoWg, cfg.MongoDB)
 	if err != nil {
 		logger.Fatalw("failed to create repository", err)
 	}
 
-	kafka.NewConsumer(cfg.Kafka, logger, repo, badgeCfg)
+	kafka.NewConsumer(ctx, wg, cfg.Kafka, logger, repo, badgeCfg) // todo
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
-	if err != nil {
-		logger.Fatalw("failed to listen", err)
-	}
+	service.RunServices(ctx, logger, wg, cfg, badgeCfg, repo)
 
-	s := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		grpczap.UnaryServerInterceptor(logger.Desugar(), grpczap.WithLevels(func(code codes.Code) zapcore.Level {
-			if code != codes.Internal && code != codes.Unavailable && code != codes.Unknown {
-				return zapcore.DebugLevel
-			} else {
-				return zapcore.ErrorLevel
-			}
-		})),
-	))
-	mcplayer.RegisterMcPlayerServer(s, service.NewMcPlayerService(repo))
-	badge.RegisterBadgeManagerServer(s, service.NewBadgeService(repo, badgeCfg))
-	logger.Infow("listening for gRPC requests", "port", cfg.Port)
+	wg.Wait()
+	logger.Info("shutting down")
 
-	err = s.Serve(lis)
-	if err != nil {
-		logger.Fatalw("failed to serve", err)
-	}
+	logger.Info("shutting down repository")
+	repoCancel()
+	repoWg.Wait()
 }

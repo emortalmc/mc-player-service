@@ -1,7 +1,7 @@
 package config
 
 import (
-	pbmodel "github.com/emortalmc/proto-specs/gen/go/models/badge"
+	pbmodel "github.com/emortalmc/proto-specs/gen/go/model/badge"
 	"github.com/spf13/viper"
 	"strings"
 )
