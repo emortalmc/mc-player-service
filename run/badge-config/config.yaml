@@ -121,7 +121,7 @@ badges:
 
     guiItem:
       material: "minecraft:bedrock" # replace with sunglasses item when added
-      displayName: "<i:false><black>Cool</black> \uE00B"
+      displayName: "<i:false><white>Cool</white> \uE00B"
       lore:
         - "<i:false><gold>Is cool</gold>"
 
