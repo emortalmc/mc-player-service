@@ -12,7 +12,7 @@ badges:
       - "<gold>A more important staff member of EmortalMC</gold>"
 
     guiItem:
-      material: "minecraft:bedrock"
+      material: "minecraft:magenta_concrete"
       displayName: "<i:false><gradient:#c77800:#c400bd>Emortal</gradient> \uE005"
       lore:
         - "<i:false><gold>A more important staff member of EmortalMC</gold>"
@@ -30,7 +30,7 @@ badges:
       - "<gold>A staff member of EmortalMC</gold>"
 
     guiItem:
-      material: "minecraft:bedrock"
+      material: "minecraft:shield"
       displayName: "<i:false><dark_purple>Staff</dark_purple> \uE006"
       lore:
         - "<i:false><gold>A staff member of EmortalMC</gold>"
@@ -115,12 +115,12 @@ badges:
     chatCharacter: "\uE00B"
 
     hoverText:
-      - "<gold>Badge: <black>Cool</black></gold>"
+      - "<gold>Badge: <white>Cool</white></gold>"
       - ""
       - "<gold>Is cool</gold>"
 
     guiItem:
-      material: "minecraft:bedrock"
+      material: "minecraft:bedrock" # replace with sunglasses item when added
       displayName: "<i:false><black>Cool</black> \uE00B"
       lore:
         - "<i:false><gold>Is cool</gold>"
@@ -156,7 +156,7 @@ badges:
       - "<gold>Someone with this rank is an absolute loser and is not to be spoken to</gold>"
 
     guiItem:
-      material: "minecraft:bedrock"
+      material: "minecraft:brown_wool"
       displayName: "<i:false><color:#7b5c00>Absolute Loser</color> \uE00D"
       lore:
         - "<i:false><gold>Someone with this rank is an absolute loser and is not to be spoken to</gold>"
