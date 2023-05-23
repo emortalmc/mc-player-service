@@ -32,9 +32,9 @@ func Run(cfg *config.Config, logger *zap.SugaredLogger) {
 		logger.Fatalw("failed to create repository", err)
 	}
 
-	kafka.NewConsumer(ctx, wg, cfg.Kafka, logger, repo, badgeCfg) // todo
-
 	badgeHandler := badge.NewBadgeHandler(logger, repo, badgeCfg)
+
+	kafka.NewConsumer(ctx, wg, cfg.Kafka, logger, repo, badgeHandler, badgeCfg)
 
 	service.RunServices(ctx, logger, wg, cfg, badgeHandler, badgeCfg, repo)
 
