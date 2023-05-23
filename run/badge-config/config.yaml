@@ -48,7 +48,7 @@ badges:
       - "<gold>Has 32 merged pull requests to EmortalMC repositories</gold>"
 
     guiItem:
-      material: "minecraft:diamond_pickaxe"
+      material: "minecraft:netherite_pickaxe"
       displayName: "<i:false><gradient:#c77800:#c400bd>Contributor (x4)</gradient> \uE00A"
       lore:
         - "<i:false><gold>Has 32 merged pull requests to EmortalMC repositories</gold>"
@@ -66,7 +66,7 @@ badges:
       - "<gold>Has 16 merged pull requests to EmortalMC repositories</gold>"
 
     guiItem:
-      material: "minecraft:iron_pickaxe"
+      material: "minecraft:golden_pickaxe"
       displayName: "<i:false><color:#c48300>Contributor (x3)</color> \uE009"
       lore:
         - "<i:false><gold>Has 16 merged pull requests to EmortalMC repositories</gold>"
@@ -84,7 +84,7 @@ badges:
       - "<gold>Has 8 merged pull requests to EmortalMC repositories</gold>"
 
     guiItem:
-      material: "minecraft:stone_pickaxe"
+      material: "minecraft:iron_pickaxe"
       displayName: "<i:false><color:#bababa>Contributor (x2)</color> \uE008"
       lore:
         - "<i:false><gold>Has 8 merged pull requests to EmortalMC repositories</gold>"
