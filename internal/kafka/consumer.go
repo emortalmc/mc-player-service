@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
+	badgeh "mc-player-service/internal/badge"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/repository"
 	"mc-player-service/internal/repository/model"
@@ -25,6 +26,7 @@ const permissionsTopic = "permissions"
 type consumer struct {
 	logger *zap.SugaredLogger
 	repo   repository.Repository
+	badgeH badgeh.Handler
 
 	badges map[string]*config.Badge
 
@@ -32,7 +34,7 @@ type consumer struct {
 }
 
 func NewConsumer(ctx context.Context, wg *sync.WaitGroup, config *config.KafkaConfig, logger *zap.SugaredLogger, repo repository.Repository,
-	badgeCfg *config.BadgeConfig) {
+	badgeH badgeh.Handler, badgeCfg *config.BadgeConfig) {
 
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     []string{fmt.Sprintf("%s:%d", config.Host, config.Port)},
@@ -52,6 +54,7 @@ func NewConsumer(ctx context.Context, wg *sync.WaitGroup, config *config.KafkaCo
 	c := &consumer{
 		logger: logger,
 		repo:   repo,
+		badgeH: badgeH,
 
 		badges: badgeCfg.Badges,
 
@@ -175,8 +178,7 @@ func (c *consumer) handlePlayerDisconnectMessage(ctx context.Context, kafkaMsg *
 	}
 }
 
-// TODO handle a change if the role priority changes
-func (c *consumer) handlePlayerRolesUpdateMessage(ctx context.Context, kafkaMsg *kafka.Message, uncastMsg proto.Message) {
+func (c *consumer) handlePlayerRolesUpdateMessage(ctx context.Context, _ *kafka.Message, uncastMsg proto.Message) {
 	m := uncastMsg.(*permmsg.PlayerRolesUpdateMessage)
 	roleId := m.RoleId
 
@@ -199,9 +201,9 @@ func (c *consumer) handlePlayerRolesUpdateMessage(ctx context.Context, kafkaMsg 
 
 	switch m.ChangeType {
 	case permmsg.PlayerRolesUpdateMessage_ADD:
-		_, err = c.repo.AddPlayerBadge(ctx, playerId, badge.Id)
+		err = c.badgeH.AddBadgeToPlayer(ctx, playerId, badge.Id)
 	case permmsg.PlayerRolesUpdateMessage_REMOVE:
-		_, err = c.repo.RemovePlayerBadge(ctx, playerId, badge.Id)
+		err = c.badgeH.RemoveBadgeFromPlayer(ctx, playerId, badge.Id)
 	}
 	if err != nil {
 		c.logger.Errorw("error updating player badges", "error", err)

@@ -24,12 +24,13 @@ type Repository interface {
 
 	// Badges
 
+	UpdatePlayerBadgesAndActive(ctx context.Context, playerId uuid.UUID, badges []string, activeBadge *string) error
 	GetPlayerBadges(ctx context.Context, playerId uuid.UUID) ([]string, error)
 	AddPlayerBadge(ctx context.Context, playerId uuid.UUID, badgeId string) (int64, error)
 	RemovePlayerBadge(ctx context.Context, playerId uuid.UUID, badgeId string) (int64, error)
 
 	GetActivePlayerBadge(ctx context.Context, playerId uuid.UUID) (*string, error)
-	SetActivePlayerBadge(ctx context.Context, playerId uuid.UUID, badgeId string) error
+	SetActivePlayerBadge(ctx context.Context, playerId uuid.UUID, badgeId *string) error
 }
 
 type UsernameSearchFilter struct {

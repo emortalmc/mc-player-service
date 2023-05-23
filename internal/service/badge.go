@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	badgeh "mc-player-service/internal/badge"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/repository"
 )
@@ -16,12 +17,14 @@ type badgeService struct {
 	pb.BadgeManagerServer
 
 	repo     repository.Repository
+	badgeH   badgeh.Handler
 	badgeCfg *config.BadgeConfig
 }
 
-func newBadgeService(repo repository.Repository, badgeCfg *config.BadgeConfig) pb.BadgeManagerServer {
+func newBadgeService(repo repository.Repository, badgeH badgeh.Handler, badgeCfg *config.BadgeConfig) pb.BadgeManagerServer {
 	return &badgeService{
 		repo:     repo,
+		badgeH:   badgeH,
 		badgeCfg: badgeCfg,
 	}
 }
@@ -42,7 +45,7 @@ func (s *badgeService) SetActivePlayerBadge(ctx context.Context, request *pb.Set
 
 	for _, badgeId := range badgeIds {
 		if badgeId == request.BadgeId {
-			if err := s.repo.SetActivePlayerBadge(ctx, playerId, request.BadgeId); err != nil {
+			if err := s.repo.SetActivePlayerBadge(ctx, playerId, &request.BadgeId); err != nil {
 				return nil, status.Error(codes.Internal, "failed to set active badge")
 			}
 
@@ -62,16 +65,14 @@ func (s *badgeService) RemoveBadgeFromPlayer(ctx context.Context, request *pb.Re
 		return nil, status.Error(codes.InvalidArgument, "invalid player_id")
 	}
 
-	changeCount, err := s.repo.RemovePlayerBadge(ctx, playerId, request.BadgeId)
+	err = s.badgeH.RemoveBadgeFromPlayer(ctx, playerId, request.BadgeId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to remove player badge: %w", err)
+		if err == badgeh.DoesntHaveBadgeErr {
+			return nil, removeBadgeFromPlayerDoesntHaveBadgeErr
+		} else {
+			return nil, status.Error(codes.Internal, "failed to remove badge from player")
+		}
 	}
-
-	if changeCount == 0 {
-		return nil, removeBadgeFromPlayerDoesntHaveBadgeErr
-	}
-
-	// TODO recalculate active badge if necessary
 
 	return &pb.RemoveBadgeFromPlayerResponse{}, nil
 }
@@ -129,25 +130,21 @@ func (s *badgeService) GetPlayerBadges(ctx context.Context, request *pb.GetPlaye
 var addBadgeToPlayerAlreadyHasBadgeErr = panicIfErr(status.New(codes.AlreadyExists, "player already has this badge").
 	WithDetails(&pb.AddBadgeToPlayerErrorResponse{Reason: pb.AddBadgeToPlayerErrorResponse_PLAYER_ALREADY_HAS_BADGE})).Err()
 
-// TODO check for their badge priority and if it changes what badge they have active
 func (s *badgeService) AddBadgeToPlayer(ctx context.Context, request *pb.AddBadgeToPlayerRequest) (*pb.AddBadgeToPlayerResponse, error) {
 	playerId, err := uuid.Parse(request.PlayerId)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid player_id")
 	}
 
-	_, ok := s.badgeCfg.Badges[request.BadgeId]
-	if !ok {
-		return nil, status.Error(codes.InvalidArgument, "invalid badge_id")
-	}
-
-	changeCount, err := s.repo.AddPlayerBadge(ctx, playerId, request.BadgeId)
+	err = s.badgeH.AddBadgeToPlayer(ctx, playerId, request.BadgeId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to add badge to player: %w", err)
-	}
-
-	if changeCount == 0 {
-		return nil, addBadgeToPlayerAlreadyHasBadgeErr
+		if err == badgeh.AlreadyHasBadgeErr {
+			return nil, addBadgeToPlayerAlreadyHasBadgeErr
+		} else if err == badgeh.DoesntExistErr {
+			return nil, status.Error(codes.InvalidArgument, "badge does not exist")
+		} else {
+			return nil, status.Error(codes.Internal, "failed to add badge to player")
+		}
 	}
 
 	return &pb.AddBadgeToPlayerResponse{}, nil

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"go.uber.org/zap"
+	"mc-player-service/internal/badge"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/kafka"
 	"mc-player-service/internal/repository"
@@ -33,7 +34,9 @@ func Run(cfg *config.Config, logger *zap.SugaredLogger) {
 
 	kafka.NewConsumer(ctx, wg, cfg.Kafka, logger, repo, badgeCfg) // todo
 
-	service.RunServices(ctx, logger, wg, cfg, badgeCfg, repo)
+	badgeHandler := badge.NewBadgeHandler(logger, repo, badgeCfg)
+
+	service.RunServices(ctx, logger, wg, cfg, badgeHandler, badgeCfg, repo)
 
 	wg.Wait()
 	logger.Info("shutting down")

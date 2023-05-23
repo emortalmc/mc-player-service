@@ -13,9 +13,9 @@ badges:
 
     guiItem:
       material: "minecraft:bedrock"
-      displayName: "<gradient:#c77800:#c400bd>Emortal</gradient>"
+      displayName: "<i:false><gradient:#c77800:#c400bd>Emortal</gradient> \uE005"
       lore:
-        - "<gold>A more important staff member of EmortalMC</gold>"
+        - "<i:false><gold>A more important staff member of EmortalMC</gold>"
 
   staff:
     id: staff
@@ -31,9 +31,9 @@ badges:
 
     guiItem:
       material: "minecraft:bedrock"
-      displayName: "<dark_purple>Staff</dark_purple>"
+      displayName: "<i:false><dark_purple>Staff</dark_purple> \uE006"
       lore:
-        - "<gold>A staff member of EmortalMC</gold>"
+        - "<i:false><gold>A staff member of EmortalMC</gold>"
 
   contributor_4:
     id: contributor_4
@@ -48,10 +48,10 @@ badges:
       - "<gold>Has 32 merged pull requests to EmortalMC repositories</gold>"
 
     guiItem:
-      material: "minecraft:bedrock"
-      displayName: "<gradient:#c77800:#c400bd>Contributor (x4)</gradient>"
+      material: "minecraft:diamond_pickaxe"
+      displayName: "<i:false><gradient:#c77800:#c400bd>Contributor (x4)</gradient> \uE00A"
       lore:
-        - "<gold>Has 32 merged pull requests to EmortalMC repositories</gold>"
+        - "<i:false><gold>Has 32 merged pull requests to EmortalMC repositories</gold>"
 
   contributor_3:
     id: contributor_3
@@ -66,10 +66,10 @@ badges:
       - "<gold>Has 16 merged pull requests to EmortalMC repositories</gold>"
 
     guiItem:
-      material: "minecraft:bedrock"
-      displayName: "<color:#c48300>Contributor (x3)</color>"
+      material: "minecraft:iron_pickaxe"
+      displayName: "<i:false><color:#c48300>Contributor (x3)</color> \uE009"
       lore:
-        - "<gold>Has 16 merged pull requests to EmortalMC repositories</gold>"
+        - "<i:false><gold>Has 16 merged pull requests to EmortalMC repositories</gold>"
 
   contributor_2:
     id: contributor_2
@@ -84,10 +84,10 @@ badges:
       - "<gold>Has 8 merged pull requests to EmortalMC repositories</gold>"
 
     guiItem:
-      material: "minecraft:bedrock"
-      displayName: "<color:#bababa>Contributor (x2)</color>"
+      material: "minecraft:stone_pickaxe"
+      displayName: "<i:false><color:#bababa>Contributor (x2)</color> \uE008"
       lore:
-        - "<gold>Has 8 merged pull requests to EmortalMC repositories</gold>"
+        - "<i:false><gold>Has 8 merged pull requests to EmortalMC repositories</gold>"
 
   contributor_1:
     id: contributor_1
@@ -102,10 +102,10 @@ badges:
       - "<gold>Has 2 merged pull requests to EmortalMC repositories</gold>"
 
     guiItem:
-      material: "minecraft:bedrock"
-      displayName: "<color:#cd7f32>Contributor (x1)</color>"
+      material: "minecraft:wooden_pickaxe"
+      displayName: "<i:false><color:#cd7f32>Contributor (x1)</color> \uE007"
       lore:
-        - "<gold>Has 2 merged pull requests to EmortalMC repositories</gold>"
+        - "<i:false><gold>Has 2 merged pull requests to EmortalMC repositories</gold>"
 
   cool:
     id: cool
@@ -121,9 +121,9 @@ badges:
 
     guiItem:
       material: "minecraft:bedrock"
-      displayName: "<black>Cool</black>"
+      displayName: "<i:false><black>Cool</black> \uE00B"
       lore:
-        - "<gold>Is cool</gold>"
+        - "<i:false><gold>Is cool</gold>"
 
   birthday_23:
     id: birthday_23
@@ -138,10 +138,10 @@ badges:
       - "<gold>Joined during the 2023 birthday event</gold>"
 
     guiItem:
-      material: "minecraft:bedrock"
-      displayName: "<light_purple>Birthday 2023</light_purple>"
+      material: "minecraft:cake"
+      displayName: "<i:false><light_purple>Birthday 2023</light_purple> \uE00C"
       lore:
-        - "<gold>Joined during the 2023 birthday event</gold>"
+        - "<i:false><gold>Joined during the 2023 birthday event</gold>"
 
   loser:
     id: loser
@@ -157,6 +157,6 @@ badges:
 
     guiItem:
       material: "minecraft:bedrock"
-      displayName: "<color:#7b5c00>Absolute Loser</color>"
+      displayName: "<i:false><color:#7b5c00>Absolute Loser</color> \uE00D"
       lore:
-        - "<gold>Someone with this rank is an absolute loser and is not to be spoken to</gold>"
+        - "<i:false><gold>Someone with this rank is an absolute loser and is not to be spoken to</gold>"

@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	badgeh "mc-player-service/internal/badge"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/repository"
 	"net"
@@ -17,7 +18,7 @@ import (
 )
 
 func RunServices(ctx context.Context, logger *zap.SugaredLogger, wg *sync.WaitGroup, cfg *config.Config,
-	badgeCfg *config.BadgeConfig, repo repository.Repository) *grpc.Server {
+	badgeH badgeh.Handler, badgeCfg *config.BadgeConfig, repo repository.Repository) {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
@@ -34,7 +35,7 @@ func RunServices(ctx context.Context, logger *zap.SugaredLogger, wg *sync.WaitGr
 		})),
 	))
 	mcplayer.RegisterMcPlayerServer(s, newMcPlayerService(repo))
-	badge.RegisterBadgeManagerServer(s, newBadgeService(repo, badgeCfg))
+	badge.RegisterBadgeManagerServer(s, newBadgeService(repo, badgeH, badgeCfg))
 	logger.Infow("listening for gRPC requests", "port", cfg.Port)
 
 	go func() {
@@ -49,6 +50,4 @@ func RunServices(ctx context.Context, logger *zap.SugaredLogger, wg *sync.WaitGr
 		<-ctx.Done()
 		s.GracefulStop()
 	}()
-
-	return s
 }

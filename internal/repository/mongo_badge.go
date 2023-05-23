@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
@@ -21,6 +22,28 @@ func (m *mongoRepository) GetPlayerBadges(ctx context.Context, playerId uuid.UUI
 	}
 
 	return result.Badges, nil
+}
+
+func (m *mongoRepository) UpdatePlayerBadgesAndActive(ctx context.Context, playerId uuid.UUID, badges []string,
+	activeBadge *string) error {
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	update := bson.M{"$set": bson.M{"badges": badges}}
+	if activeBadge != nil {
+		update["$set"].(bson.M)["activeBadge"] = activeBadge
+	} else {
+		update["$unset"] = bson.M{"activeBadge": ""}
+	}
+
+	if r, err := m.playerCollection.UpdateByID(ctx, playerId, update); err != nil {
+		return err
+	} else if r.MatchedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+
+	return nil
 }
 
 func (m *mongoRepository) AddPlayerBadge(ctx context.Context, playerId uuid.UUID, badgeId string) (int64, error) {
@@ -63,9 +86,14 @@ func (m *mongoRepository) GetActivePlayerBadge(ctx context.Context, playerId uui
 	return result.ActiveBadge, nil
 }
 
-func (m *mongoRepository) SetActivePlayerBadge(ctx context.Context, playerId uuid.UUID, badgeId string) error {
+func (m *mongoRepository) SetActivePlayerBadge(ctx context.Context, playerId uuid.UUID, badgeId *string) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
+
+	if badgeId == nil {
+		_, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": playerId}, bson.M{"$unset": bson.M{"activeBadge": ""}})
+		return err
+	}
 
 	_, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": playerId}, bson.M{"$set": bson.M{"activeBadge": badgeId}})
 	return err
