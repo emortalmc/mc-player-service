@@ -13,7 +13,6 @@ import (
 	"mc-player-service/internal/repository"
 )
 
-// todo
 type Handler interface {
 	// AddBadgeToPlayer adds a badge to a player and updates
 	// their active badge if necessary

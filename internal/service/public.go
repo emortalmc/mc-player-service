@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/reflection"
 	badgeh "mc-player-service/internal/badge"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/repository"
@@ -34,6 +35,11 @@ func RunServices(ctx context.Context, logger *zap.SugaredLogger, wg *sync.WaitGr
 			}
 		})),
 	))
+
+	if cfg.Development {
+		reflection.Register(s)
+	}
+
 	mcplayer.RegisterMcPlayerServer(s, newMcPlayerService(repo))
 	badge.RegisterBadgeManagerServer(s, newBadgeService(repo, badgeH, badgeCfg))
 	logger.Infow("listening for gRPC requests", "port", cfg.Port)
