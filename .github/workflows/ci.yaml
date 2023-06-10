@@ -35,7 +35,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
@@ -75,6 +75,6 @@ jobs:
           version: v3.10.2
       - name: helm publish
         run: |
-          helm registry login ghcr.io --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+          helm registry login ghcr.io --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }}
           helm package ./.k8s/chart/${{ github.event.repository.name }} --version "1.0.0-${{ github.sha }}" --app-version ${{ github.sha }}
-          helm push helm-${{ github.event.repository.name }}-1.0.0-${{ github.sha }}.tgz oci://ghcr.io/${{ github.actor }}
+          helm push helm-${{ github.event.repository.name }}-1.0.0-${{ github.sha }}.tgz oci://ghcr.io/${{ github.repository_owner }}
