@@ -1,14 +1,12 @@
 name: ci
 on:
   push:
-  pull_request:
-    types: [ opened, reopened ]
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}
+  DOCKER_IMAGE_NAME: ghcr.io/${{ github.repository }}
 
 jobs:
-  lint:
+  go-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v4
@@ -22,9 +20,9 @@ jobs:
           version: latest
           args: --timeout 2m0s
 
-  build:
+  go-build:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [ lint ]
+    needs: [ go-lint ]
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.build.outputs.image }}
@@ -50,8 +48,33 @@ jobs:
           file: ./Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
-          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:latest
+          cache-from: type=registry,ref=${{ env.DOCKER_IMAGE_NAME }}:latest
           cache-to: type=inline
           tags: |
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.DOCKER_IMAGE_NAME }}:latest
+
+  helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: azure/setup-helm@v3
+        with:
+          version: v3.10.2
+      - name: helm lint
+        run: helm lint helm
+
+  helm-publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [ build, helm-lint ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: azure/setup-helm@v3
+        with:
+          version: v3.10.2
+      - name: helm publish
+        run: |
+          helm registry login ghcr.io --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+          helm package ./k8s/chart/${{ github.event.repository.name }} --version "1.0.0-${{ github.sha }}" --app-version ${{ github.sha }}
+          helm push helm-${{ github.event.repository.name }}-1.0.0-${{ github.sha }}.tgz oci://ghcr.io/${{ github.actor }}
