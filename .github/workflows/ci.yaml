@@ -61,7 +61,7 @@ jobs:
     steps:
       - name: clone
         run: |
-          git clone https://emortalmc/k8s-configs
+          git clone https://github.com/emortalmc/k8s-configs
           
           cd argocd/managed-apps/apis
           sed -i "s|${{ env.DOCKER_IMAGE_NAME }}:latest|${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}|g" mc-player.yaml
