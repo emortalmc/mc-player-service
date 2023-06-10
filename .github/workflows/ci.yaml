@@ -20,7 +20,7 @@ jobs:
           version: latest
           args: --timeout 2m0s
 
-  go-build:
+  go-publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [ go-lint ]
     runs-on: ubuntu-latest
@@ -66,7 +66,7 @@ jobs:
 
   helm-publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [ go-build, helm-lint ]
+    needs: [ go-publish, helm-lint ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -76,5 +76,5 @@ jobs:
       - name: helm publish
         run: |
           helm registry login ghcr.io --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
-          helm package ./k8s/chart/${{ github.event.repository.name }} --version "1.0.0-${{ github.sha }}" --app-version ${{ github.sha }}
+          helm package ./.k8s/chart/${{ github.event.repository.name }} --version "1.0.0-${{ github.sha }}" --app-version ${{ github.sha }}
           helm push helm-${{ github.event.repository.name }}-1.0.0-${{ github.sha }}.tgz oci://ghcr.io/${{ github.actor }}
