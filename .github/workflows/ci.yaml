@@ -62,7 +62,7 @@ jobs:
         with:
           version: v3.10.2
       - name: helm lint
-        run: helm lint ./k8s/chart/${{ github.event.repository.name }}
+        run: helm lint ./.k8s/chart/${{ github.event.repository.name }}
 
   helm-publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
