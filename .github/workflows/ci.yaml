@@ -4,6 +4,7 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/${{ github.repository }}
+  REGISTRY: ghcr.io
 
 jobs:
   go-lint:
@@ -34,7 +35,7 @@ jobs:
       - name: Login to container registry
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -54,27 +55,15 @@ jobs:
             ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
             ${{ env.DOCKER_IMAGE_NAME }}:latest
 
-  helm-lint:
+  k8s-repo-update:
+    needs: [ go-publish ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: azure/setup-helm@v3
-        with:
-          version: v3.10.2
-      - name: helm lint
-        run: helm lint ./.k8s/chart/${{ github.event.repository.name }}
-
-  helm-publish:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [ go-publish, helm-lint ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: azure/setup-helm@v3
-        with:
-          version: v3.10.2
-      - name: helm publish
+      - name: clone
         run: |
-          helm registry login ghcr.io --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }}
-          helm package ./.k8s/chart/${{ github.event.repository.name }} --version "1.0.0-${{ github.sha }}" --app-version ${{ github.sha }}
-          helm push helm-${{ github.event.repository.name }}-1.0.0-${{ github.sha }}.tgz oci://ghcr.io/${{ github.repository_owner }}
+          git clone https://emortalmc/k8s-configs
+          
+          cd argocd/managed-apps/apis
+          sed -i "s|${{ env.DOCKER_IMAGE_NAME }}:latest|${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}|g" mc-player.yaml
+          
+          git commit -m sync ${{ github.event.head_commit.message }} (${{ github.event.repository.name }}:${{ github.sha }})
