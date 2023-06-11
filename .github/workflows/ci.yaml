@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: emortalmc/actions/go-single-publish@main
+      - uses: emortalmc/actions/go/single-publish@main
         with:
           registry-password: ${{ secrets.GITHUB_TOKEN }}
 
