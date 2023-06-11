@@ -60,14 +60,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: clone
+        # git commit -a automatically adds files that have been modified
         run: |
           git clone https://github.com/emortalmc/k8s-configs
           
-          git config user.name github-actions
-          git config user.email github-actions@github.com
+          git config --global user.name github-actions
+          git config --global user.email github-actions@github.com
           
           cd k8s-configs
           sed -i "s|${{ env.DOCKER_IMAGE_NAME }}:latest|${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}|g" argocd/managed-apps/apis/mc-player.yaml
           
-          git commit -m "sync ${{ github.event.head_commit.message }} (${{ github.event.repository.name }}:${{ github.sha }})"
+          git commit -am "sync ${{ github.event.head_commit.message }} (${{ github.event.repository.name }}:${{ github.sha }})"
           git push
