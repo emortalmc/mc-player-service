@@ -59,13 +59,16 @@ jobs:
     needs: [ go-publish ]
     runs-on: ubuntu-latest
     steps:
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.AUTOMATION_SSH_KEY }}
       - name: clone
         # git commit -a automatically adds files that have been modified
         run: |
           git clone https://github.com/emortalmc/k8s-configs
           
-          git config --global user.name github-actions
-          git config --global user.email github-actions@github.com
+          git config --global user.name emortalmc-bot
+          git config --global user.email 136233525+emortalmc-bot@users.noreply.github.com
           
           cd k8s-configs
           sed -i "s|${{ env.DOCKER_IMAGE_NAME }}:latest|${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}|g" argocd/managed-apps/apis/mc-player.yaml
