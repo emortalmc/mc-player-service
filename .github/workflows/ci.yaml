@@ -73,5 +73,5 @@ jobs:
           cd k8s-configs
           sed -i "s|${{ env.DOCKER_IMAGE_NAME }}:[^ ]*|${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}|g" argocd/managed-apps/apis/mc-player.yaml
           
-          git commit -am "sync ${{ github.event.head_commit.message }} (${{ github.event.repository.name }}:${{ github.sha }})"
+          git commit -am "(sync/${{ github.event.repository.name }}) ${{ github.event.head_commit.message }} - ${{ github.sha }}"
           git push
