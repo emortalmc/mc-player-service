@@ -53,7 +53,7 @@ func NewMongoRepository(ctx context.Context, logger *zap.SugaredLogger, wg *sync
 		}
 	}()
 
-	repo.createIndexes(ctx, logger)
+	repo.createIndexes(ctx)
 	logger.Infow("created mongo indexes")
 
 	return repo, nil
@@ -73,7 +73,7 @@ var (
 			Options: options.Index().SetName("playerId"),
 		},
 		{
-			Keys:    bson.D{{"playerId", 1}, {"logoutTime", 1}},
+			Keys:    bson.D{{Key: "playerId", Value: 1}, {Key: "logoutTime", Value: 1}},
 			Options: options.Index().SetName("playerId_logoutTime"),
 		},
 	}
@@ -90,10 +90,7 @@ var (
 	}
 )
 
-func (m *mongoRepository) createIndexes(ctx context.Context, logger *zap.SugaredLogger) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
+func (m *mongoRepository) createIndexes(ctx context.Context) {
 	collIndexes := map[*mongo.Collection][]mongo.IndexModel{
 		m.playerCollection:   playerIndexes,
 		m.sessionCollection:  sessionIndexes,
@@ -106,7 +103,7 @@ func (m *mongoRepository) createIndexes(ctx context.Context, logger *zap.Sugared
 	for coll, indexes := range collIndexes {
 		go func(coll *mongo.Collection, indexes []mongo.IndexModel) {
 			defer wg.Done()
-			_, err := m.createCollIndexes(coll, indexes)
+			_, err := m.createCollIndexes(ctx, coll, indexes)
 			if err != nil {
 				panic(fmt.Sprintf("failed to create indexes for collection %s: %s", coll.Name(), err))
 			}
@@ -116,8 +113,8 @@ func (m *mongoRepository) createIndexes(ctx context.Context, logger *zap.Sugared
 	wg.Wait()
 }
 
-func (m *mongoRepository) createCollIndexes(coll *mongo.Collection, indexes []mongo.IndexModel) (int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (m *mongoRepository) createCollIndexes(ctx context.Context, coll *mongo.Collection, indexes []mongo.IndexModel) (int, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	result, err := coll.Indexes().CreateMany(ctx, indexes)
