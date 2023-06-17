@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -10,6 +11,7 @@ import (
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/repository/registrytypes"
 	"sync"
+	"time"
 )
 
 const (
@@ -51,7 +53,79 @@ func NewMongoRepository(ctx context.Context, logger *zap.SugaredLogger, wg *sync
 		}
 	}()
 
+	repo.createIndexes(ctx, logger)
+	logger.Infow("created mongo indexes")
+
 	return repo, nil
+}
+
+var (
+	playerIndexes = []mongo.IndexModel{
+		{
+			Keys:    bson.M{"currentUsername": "text"},
+			Options: options.Index().SetName("currentUsername_text"),
+		},
+	}
+
+	sessionIndexes = []mongo.IndexModel{
+		{
+			Keys:    bson.M{"playerId": 1},
+			Options: options.Index().SetName("playerId"),
+		},
+		{
+			Keys:    bson.D{{"playerId", 1}, {"logoutTime", 1}},
+			Options: options.Index().SetName("playerId_logoutTime"),
+		},
+	}
+
+	usernameIndexes = []mongo.IndexModel{
+		{
+			Keys:    bson.M{"username": 1},
+			Options: options.Index().SetName("username"),
+		},
+		{
+			Keys:    bson.M{"playerId": 1},
+			Options: options.Index().SetName("playerId"),
+		},
+	}
+)
+
+func (m *mongoRepository) createIndexes(ctx context.Context, logger *zap.SugaredLogger) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	collIndexes := map[*mongo.Collection][]mongo.IndexModel{
+		m.playerCollection:   playerIndexes,
+		m.sessionCollection:  sessionIndexes,
+		m.usernameCollection: usernameIndexes,
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(collIndexes))
+
+	for coll, indexes := range collIndexes {
+		go func(coll *mongo.Collection, indexes []mongo.IndexModel) {
+			defer wg.Done()
+			_, err := m.createCollIndexes(coll, indexes)
+			if err != nil {
+				panic(fmt.Sprintf("failed to create indexes for collection %s: %s", coll.Name(), err))
+			}
+		}(coll, indexes)
+	}
+
+	wg.Wait()
+}
+
+func (m *mongoRepository) createCollIndexes(coll *mongo.Collection, indexes []mongo.IndexModel) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := coll.Indexes().CreateMany(ctx, indexes)
+	if err != nil {
+		return 0, err
+	}
+
+	return len(result), nil
 }
 
 func createCodecRegistry() *bsoncodec.Registry {
