@@ -62,8 +62,10 @@ func NewMongoRepository(ctx context.Context, logger *zap.SugaredLogger, wg *sync
 var (
 	playerIndexes = []mongo.IndexModel{
 		{
-			Keys:    bson.M{"currentUsername": "text"},
-			Options: options.Index().SetName("currentUsername_text"),
+			Keys: bson.M{"currentUsername": "text"},
+			Options: options.Index().
+				SetCollation(&options.Collation{Strength: 1}).
+				SetName("currentUsername_text_ignoreCase"),
 		},
 	}
 

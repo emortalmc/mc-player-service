@@ -56,18 +56,17 @@ func (m *mongoRepository) GetPlayerByUsername(ctx context.Context, username stri
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	var query bson.M
+	query := bson.M{"currentUsername": username}
+
+	opts := options.FindOne()
 	if ignoreCase {
-		query = bson.M{"currentUsername": primitive.Regex{
-			Pattern: "^" + username,
-			Options: "i",
-		}}
-	} else {
-		query = bson.M{"currentUsername": username}
+		opts.SetCollation(&options.Collation{
+			Strength: 1,
+		})
 	}
 
 	var mongoResult *model.Player
-	err := m.playerCollection.FindOne(ctx, query).Decode(&mongoResult)
+	err := m.playerCollection.FindOne(ctx, query, opts).Decode(&mongoResult)
 	if err != nil {
 		return nil, err
 	}
