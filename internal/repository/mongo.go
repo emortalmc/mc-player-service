@@ -61,11 +61,21 @@ func NewMongoRepository(ctx context.Context, logger *zap.SugaredLogger, wg *sync
 
 var (
 	playerIndexes = []mongo.IndexModel{
-		{
+		{ // Allows for username search
 			Keys: bson.M{"currentUsername": "text"},
 			Options: options.Index().
+				SetName("currentUsername_text"),
+		},
+		{ // Allows for case-insensitive matching
+			Keys: bson.M{"currentUsername": 1},
+			Options: options.Index().
 				SetCollation(&options.Collation{Strength: 1, Locale: "en"}).
-				SetName("currentUsername_text_ignoreCase"),
+				SetName("currentUsername_ignoreCase"),
+		},
+		{ // Regular matching
+			Keys: bson.M{"currentUsername": 1},
+			Options: options.Index().
+				SetName("currentUsername"),
 		},
 	}
 

@@ -61,6 +61,7 @@ func (m *mongoRepository) GetPlayerByUsername(ctx context.Context, username stri
 	opts := options.FindOne()
 	if ignoreCase {
 		opts.SetCollation(&options.Collation{
+			Locale:   "en",
 			Strength: 1,
 		})
 	}
