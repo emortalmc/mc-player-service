@@ -64,7 +64,7 @@ var (
 		{
 			Keys: bson.M{"currentUsername": "text"},
 			Options: options.Index().
-				SetCollation(&options.Collation{Strength: 1}).
+				SetCollation(&options.Collation{Strength: 1, Locale: "en"}).
 				SetName("currentUsername_text_ignoreCase"),
 		},
 	}
