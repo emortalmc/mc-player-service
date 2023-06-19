@@ -3,7 +3,7 @@ module mc-player-service
 go 1.20
 
 require (
-	github.com/emortalmc/proto-specs/gen/go v0.0.0-20230427173617-cdb37781f4c8
+	github.com/emortalmc/proto-specs/gen/go v0.0.0-20230619200620-f1babdcdc6b6
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/segmentio/kafka-go v0.4.39

@@ -15,8 +15,8 @@ type Badge struct {
 	Priority int
 	Required bool
 
-	FriendlyName  string
-	ChatCharacter string
+	FriendlyName string
+	ChatString   string
 
 	// HoverText is parsed on the client side as MiniMessage
 	HoverText []string
@@ -32,13 +32,13 @@ func (b *Badge) GetFormattedHoverText() string {
 
 func (b *Badge) ToProto() *pbmodel.Badge {
 	return &pbmodel.Badge{
-		Id:            b.Id,
-		Priority:      int64(b.Priority),
-		Required:      b.Required,
-		FriendlyName:  b.FriendlyName,
-		ChatCharacter: b.ChatCharacter,
-		HoverText:     b.GetFormattedHoverText(),
-		GuiItem:       b.GuiItem.ToProto(),
+		Id:           b.Id,
+		Priority:     int64(b.Priority),
+		Required:     b.Required,
+		FriendlyName: b.FriendlyName,
+		ChatString:   b.ChatString,
+		HoverText:    b.GetFormattedHoverText(),
+		GuiItem:      b.GuiItem.ToProto(),
 	}
 }
 
