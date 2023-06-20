@@ -35,7 +35,7 @@ func (s *mcPlayerService) GetPlayer(ctx context.Context, req *pb.GetPlayerReques
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid player id %s", req.PlayerId))
 	}
 
-	mcPlayer, err := s.createMcPlayer(ctx, pId)
+	mcPlayer, err := s.getOrCreateMcPlayer(ctx, pId)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (s *mcPlayerService) GetPlayers(ctx context.Context, req *pb.GetPlayersRequ
 
 	var protoPlayers = make([]*mcplayer.McPlayer, len(players))
 	for i, p := range players {
-		protoPlayers[i], err = s.createMcPlayer(ctx, p.Id)
+		protoPlayers[i], err = s.createMcPlayerFromPlayer(ctx, p)
 		if err != nil {
 			return nil, fmt.Errorf("error creating player proto: %w", err)
 		}
@@ -82,7 +82,7 @@ func (s *mcPlayerService) GetPlayerByUsername(ctx context.Context, req *pb.Playe
 		return nil, err
 	}
 
-	mcPlayer, err := s.createMcPlayer(ctx, p.Id)
+	mcPlayer, err := s.createMcPlayerFromPlayer(ctx, p)
 	if err != nil {
 		return nil, fmt.Errorf("error creating player proto: %w", err)
 	}
@@ -147,7 +147,7 @@ func (s *mcPlayerService) GetLoginSessions(ctx context.Context, req *pb.GetLogin
 	}, nil
 }
 
-func (s *mcPlayerService) createMcPlayer(ctx context.Context, pId uuid.UUID) (*mcplayer.McPlayer, error) {
+func (s *mcPlayerService) getOrCreateMcPlayer(ctx context.Context, pId uuid.UUID) (*mcplayer.McPlayer, error) {
 	p, err := s.repo.GetPlayer(ctx, pId)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -160,7 +160,6 @@ func (s *mcPlayerService) createMcPlayer(ctx context.Context, pId uuid.UUID) (*m
 }
 
 func (s *mcPlayerService) createMcPlayerFromPlayer(ctx context.Context, p *model.Player) (*mcplayer.McPlayer, error) {
-
 	var sessionProto *mcplayer.LoginSession
 	if p.CurrentlyOnline {
 		session, err := s.repo.GetCurrentLoginSession(ctx, p.Id)
