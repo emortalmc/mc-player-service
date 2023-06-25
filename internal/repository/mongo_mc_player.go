@@ -44,11 +44,11 @@ func (m *mongoRepository) GetPlayers(ctx context.Context, pIds []uuid.UUID) ([]*
 	return mongoResult, nil
 }
 
-func (m *mongoRepository) SavePlayerWithUpsert(ctx context.Context, player *model.Player) error {
+func (m *mongoRepository) SavePlayer(ctx context.Context, player *model.Player, upsert bool) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	_, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": player.Id}, bson.M{"$set": player}, options.Update().SetUpsert(true))
+	_, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": player.Id}, bson.M{"$set": player}, options.Update().SetUpsert(upsert))
 	return err
 }
 

@@ -25,7 +25,7 @@ type Player struct {
 	// ActiveBadge ID of the badge the player has currently active (nil if none)
 	ActiveBadge *string `bson:"activeBadge,omitempty"`
 
-	CurrentServer *CurrentServer `bson:"currentServer"`
+	CurrentServer *CurrentServer `bson:"currentServer,omitempty"`
 }
 
 func (p *Player) ToProto(session *LoginSession) *mcplayer.McPlayer {

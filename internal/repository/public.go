@@ -11,7 +11,7 @@ import (
 type Repository interface {
 	GetPlayer(ctx context.Context, id uuid.UUID) (*model.Player, error)
 	GetPlayers(ctx context.Context, ids []uuid.UUID) ([]*model.Player, error)
-	SavePlayerWithUpsert(ctx context.Context, player *model.Player) error
+	SavePlayer(ctx context.Context, player *model.Player, upsert bool) error
 	GetPlayerByUsername(ctx context.Context, username string, ignoreCase bool) (*model.Player, error)
 	SearchPlayersByUsername(ctx context.Context, username string, pageable *common.Pageable, filter UsernameSearchFilter) ([]*model.Player, *common.PageData, error)
 

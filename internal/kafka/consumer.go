@@ -118,7 +118,7 @@ func (c *consumer) handlePlayerConnectMessage(ctx context.Context, kafkaM *kafka
 		p.CurrentServer = server
 	}
 
-	err = c.repo.SavePlayerWithUpsert(ctx, p)
+	err = c.repo.SavePlayer(ctx, p, true)
 	if err != nil {
 		c.logger.Errorw("error saving player", "error", err)
 		return
@@ -179,7 +179,7 @@ func (c *consumer) handlePlayerDisconnectMessage(ctx context.Context, kafkaMsg *
 	p.TotalPlaytime += s.GetDuration()
 	p.LastOnline = kafkaMsg.Time
 
-	if err := c.repo.SavePlayerWithUpsert(ctx, p); err != nil {
+	if err := c.repo.SavePlayer(ctx, p, false); err != nil {
 		c.logger.Errorw("error saving player", "error", err)
 		return
 	}
