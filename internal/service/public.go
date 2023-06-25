@@ -42,6 +42,7 @@ func RunServices(ctx context.Context, logger *zap.SugaredLogger, wg *sync.WaitGr
 
 	mcplayer.RegisterMcPlayerServer(s, newMcPlayerService(repo))
 	badge.RegisterBadgeManagerServer(s, newBadgeService(repo, badgeH, badgeCfg))
+	mcplayer.RegisterPlayerTrackerServer(s, newPlayerTrackerService(repo))
 	logger.Infow("listening for gRPC requests", "port", cfg.Port)
 
 	go func() {

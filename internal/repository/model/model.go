@@ -4,6 +4,7 @@ import (
 	"github.com/emortalmc/proto-specs/gen/go/model/mcplayer"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
 )
@@ -24,7 +25,56 @@ type Player struct {
 	// ActiveBadge ID of the badge the player has currently active (nil if none)
 	ActiveBadge *string `bson:"activeBadge,omitempty"`
 
-	CurrentlyOnline bool `bson:"currentlyOnline"`
+	CurrentServer *CurrentServer `bson:"currentServer,omitempty"`
+}
+
+func (p *Player) ToProto(session *LoginSession) *mcplayer.McPlayer {
+	return &mcplayer.McPlayer{
+		Id:               p.Id.String(),
+		CurrentUsername:  p.CurrentUsername,
+		FirstLogin:       timestamppb.New(p.FirstLogin),
+		LastOnline:       timestamppb.New(p.LastOnline),
+		CurrentlyOnline:  p.CurrentServer != nil,
+		CurrentSession:   session.ToProto(),
+		HistoricPlayTime: durationpb.New(p.TotalPlaytime),
+		CurrentServer:    p.CurrentServer.ToProto(),
+	}
+}
+
+var OnlinePlayerProjection = map[string]interface{}{
+	"_id":             1,
+	"currentUsername": 1,
+	"currentServer":   1,
+}
+
+// OnlinePlayer a partial player object that is used
+// by the PlayerTracker to track online players
+type OnlinePlayer struct {
+	Id              uuid.UUID `bson:"_id"`
+	CurrentUsername string    `bson:"currentUsername"`
+
+	CurrentServer *CurrentServer `bson:"currentServer,omitempty"`
+}
+
+func (p *OnlinePlayer) ToProto() *mcplayer.OnlinePlayer {
+	return &mcplayer.OnlinePlayer{
+		PlayerId: p.Id.String(),
+		Username: p.CurrentUsername,
+		Server:   p.CurrentServer.ToProto(),
+	}
+}
+
+type CurrentServer struct {
+	ServerId  string `bson:"serverId"`
+	ProxyId   string `bson:"proxyId"`
+	FleetName string `bson:"fleetName"`
+}
+
+func (s *CurrentServer) ToProto() *mcplayer.CurrentServer {
+	return &mcplayer.CurrentServer{
+		ServerId: s.ServerId,
+		ProxyId:  s.ProxyId,
+	}
 }
 
 type LoginSession struct {

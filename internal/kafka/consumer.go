@@ -16,6 +16,7 @@ import (
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/repository"
 	"mc-player-service/internal/repository/model"
+	"mc-player-service/internal/utils"
 	"sync"
 	"time"
 )
@@ -64,6 +65,7 @@ func NewConsumer(ctx context.Context, wg *sync.WaitGroup, config *config.KafkaCo
 	handler := kafkautils.NewConsumerHandler(logger, reader)
 	handler.RegisterHandler(&common.PlayerConnectMessage{}, c.handlePlayerConnectMessage)
 	handler.RegisterHandler(&common.PlayerDisconnectMessage{}, c.handlePlayerDisconnectMessage)
+	handler.RegisterHandler(&common.PlayerSwitchServerMessage{}, c.handlePlayerSwitchServerMessage)
 	handler.RegisterHandler(&permmsg.PlayerRolesUpdateMessage{}, c.handlePlayerRolesUpdateMessage)
 
 	logger.Infow("starting listening for kafka messages", "topics", reader.Config().GroupTopics)
@@ -87,28 +89,33 @@ func (c *consumer) handlePlayerConnectMessage(ctx context.Context, kafkaM *kafka
 		return
 	}
 
+	server := &model.CurrentServer{ProxyId: m.ServerId}
+
 	p, err := c.repo.GetPlayer(ctx, pId)
 	updatedUsername := false
 
-	if err != nil && err == mongo.ErrNoDocuments {
+	if err != nil && err != mongo.ErrNoDocuments {
+		c.logger.Errorw("error getting player", "error", err)
+		return
+	}
+
+	// err is ErrNoDocuments
+	if err != nil {
 		p = &model.Player{
 			Id:              pId,
 			CurrentUsername: m.PlayerUsername,
 			FirstLogin:      kafkaM.Time,
 			LastOnline:      kafkaM.Time,
 			TotalPlaytime:   0,
-			CurrentlyOnline: true,
+			CurrentServer:   server,
 		}
 		updatedUsername = true
-	} else if err != nil {
-		c.logger.Errorw("error getting player", "error", err)
-		return
 	} else {
 		if p.CurrentUsername != m.PlayerUsername {
 			p.CurrentUsername = m.PlayerUsername
 			updatedUsername = true
 		}
-		p.CurrentlyOnline = true
+		p.CurrentServer = server
 	}
 
 	err = c.repo.SavePlayerWithUpsert(ctx, p)
@@ -168,12 +175,27 @@ func (c *consumer) handlePlayerDisconnectMessage(ctx context.Context, kafkaMsg *
 		return
 	}
 
-	p.CurrentlyOnline = false
+	p.CurrentServer = nil
 	p.TotalPlaytime += s.GetDuration()
 	p.LastOnline = kafkaMsg.Time
 
 	if err := c.repo.SavePlayerWithUpsert(ctx, p); err != nil {
 		c.logger.Errorw("error saving player", "error", err)
+		return
+	}
+}
+
+func (c *consumer) handlePlayerSwitchServerMessage(ctx context.Context, _ *kafka.Message, uncastMsg proto.Message) {
+	m := uncastMsg.(*common.PlayerSwitchServerMessage)
+
+	pId, err := uuid.Parse(m.PlayerId)
+	if err != nil {
+		c.logger.Errorw("error parsing player id", "error", err)
+		return
+	}
+
+	if err := c.repo.SetPlayerServerAndFleet(ctx, pId, m.ServerId, utils.ParseFleetFromPodName(m.ServerId)); err != nil {
+		c.logger.Errorw("error setting player server", "error", err)
 		return
 	}
 }

@@ -10,8 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"mc-player-service/internal/repository"
 	"mc-player-service/internal/repository/model"
 	"mc-player-service/internal/utils"
@@ -160,23 +158,15 @@ func (s *mcPlayerService) getOrCreateMcPlayer(ctx context.Context, pId uuid.UUID
 }
 
 func (s *mcPlayerService) createMcPlayerFromPlayer(ctx context.Context, p *model.Player) (*mcplayer.McPlayer, error) {
-	var sessionProto *mcplayer.LoginSession
-	if p.CurrentlyOnline {
-		session, err := s.repo.GetCurrentLoginSession(ctx, p.Id)
+	var session *model.LoginSession
+	if p.CurrentServer != nil {
+		var err error
+		session, err = s.repo.GetCurrentLoginSession(ctx, p.Id)
 		if err != nil {
 			return nil, fmt.Errorf("error getting current login session: %w", err)
 		}
-		sessionProto = session.ToProto()
+
 	}
 
-	return &mcplayer.McPlayer{
-		Id:               p.Id.String(),
-		CurrentUsername:  p.CurrentUsername,
-		FirstLogin:       timestamppb.New(p.FirstLogin),
-		LastOnline:       timestamppb.New(p.LastOnline),
-		CurrentlyOnline:  p.CurrentlyOnline,
-		CurrentSession:   sessionProto,
-		HistoricPlayTime: durationpb.New(p.TotalPlaytime),
-	}, nil
-
+	return p.ToProto(session), nil
 }

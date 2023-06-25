@@ -22,6 +22,21 @@ type Repository interface {
 
 	CreatePlayerUsername(ctx context.Context, username *model.PlayerUsername) error
 
+	// Player Tracker
+
+	SetPlayerServerAndFleet(ctx context.Context, playerId uuid.UUID, serverId string, fleet string) error
+
+	GetPlayerServers(ctx context.Context, playerId []uuid.UUID) (map[uuid.UUID]*model.CurrentServer, error)
+	GetServerPlayers(ctx context.Context, serverId string) ([]*model.OnlinePlayer, error)
+
+	// GetPlayerCount returns the number of players on:
+	// 1. the given server if present
+	// 2. the given fleets if present
+	// 3. globally if neither are present
+	GetPlayerCount(ctx context.Context, serverId *string, fleetNames []string) (int64, error)
+
+	GetFleetPlayerCounts(ctx context.Context, fleetNames []string) (map[string]int64, error)
+
 	// Badges
 
 	UpdatePlayerBadgesAndActive(ctx context.Context, playerId uuid.UUID, badges []string, activeBadge *string) error

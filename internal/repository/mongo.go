@@ -77,6 +77,18 @@ var (
 			Options: options.Index().
 				SetName("currentUsername"),
 		},
+
+		// Player tracking
+		{
+			Keys: bson.M{"currentServer.serverId": 1},
+			Options: options.Index().
+				SetName("currentServer_serverId"),
+		},
+		{
+			Keys: bson.M{"currentServer.fleetName": 1},
+			Options: options.Index().
+				SetName("currentServer_fleetName"),
+		},
 	}
 
 	sessionIndexes = []mongo.IndexModel{
