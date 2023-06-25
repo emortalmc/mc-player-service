@@ -29,10 +29,6 @@ type Player struct {
 }
 
 func (p *Player) ToProto(session *LoginSession) *mcplayer.McPlayer {
-	var sessionProto *mcplayer.LoginSession
-	if session != nil {
-		sessionProto = session.ToProto()
-	}
 
 	return &mcplayer.McPlayer{
 		Id:               p.Id.String(),
@@ -40,7 +36,7 @@ func (p *Player) ToProto(session *LoginSession) *mcplayer.McPlayer {
 		FirstLogin:       timestamppb.New(p.FirstLogin),
 		LastOnline:       timestamppb.New(p.LastOnline),
 		CurrentlyOnline:  p.CurrentServer != nil,
-		CurrentSession:   sessionProto,
+		CurrentSession:   session.ToProto(),
 		HistoricPlayTime: durationpb.New(p.TotalPlaytime),
 		CurrentServer:    p.CurrentServer.ToProto(),
 	}
@@ -76,6 +72,10 @@ type CurrentServer struct {
 }
 
 func (s *CurrentServer) ToProto() *mcplayer.CurrentServer {
+	if s == nil {
+		return nil
+	}
+
 	return &mcplayer.CurrentServer{
 		ServerId: s.ServerId,
 		ProxyId:  s.ProxyId,
@@ -98,6 +98,10 @@ func (s *LoginSession) GetDuration() time.Duration {
 }
 
 func (s *LoginSession) ToProto() *mcplayer.LoginSession {
+	if s == nil {
+		return nil
+	}
+
 	proto := &mcplayer.LoginSession{
 		SessionId: s.Id.String(),
 		LoginTime: timestamppb.New(s.Id.Timestamp()),
