@@ -165,7 +165,6 @@ func (s *mcPlayerService) createMcPlayerFromPlayer(ctx context.Context, p *model
 		if err != nil {
 			return nil, fmt.Errorf("error getting current login session: %w", err)
 		}
-
 	}
 
 	return p.ToProto(session), nil

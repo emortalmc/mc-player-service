@@ -29,13 +29,18 @@ type Player struct {
 }
 
 func (p *Player) ToProto(session *LoginSession) *mcplayer.McPlayer {
+	var sessionProto *mcplayer.LoginSession
+	if session != nil {
+		sessionProto = session.ToProto()
+	}
+
 	return &mcplayer.McPlayer{
 		Id:               p.Id.String(),
 		CurrentUsername:  p.CurrentUsername,
 		FirstLogin:       timestamppb.New(p.FirstLogin),
 		LastOnline:       timestamppb.New(p.LastOnline),
 		CurrentlyOnline:  p.CurrentServer != nil,
-		CurrentSession:   session.ToProto(),
+		CurrentSession:   sessionProto,
 		HistoricPlayTime: durationpb.New(p.TotalPlaytime),
 		CurrentServer:    p.CurrentServer.ToProto(),
 	}
