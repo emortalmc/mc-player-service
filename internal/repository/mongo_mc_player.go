@@ -86,7 +86,7 @@ func (m *mongoRepository) SearchPlayersByUsername(ctx context.Context, username 
 	}}})
 
 	if filter.OnlineOnly {
-		queries = append(queries, bson.M{"$has": bson.M{"$field": "currentServer"}})
+		queries = append(queries, bson.M{"currentServer": bson.M{"$exists": true}})
 	}
 	query := bson.M{"$and": queries}
 
