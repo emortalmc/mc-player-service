@@ -14,6 +14,7 @@ type Repository interface {
 	SavePlayer(ctx context.Context, player *model.Player, upsert bool) error
 	GetPlayerByUsername(ctx context.Context, username string, ignoreCase bool) (*model.Player, error)
 	SearchPlayersByUsername(ctx context.Context, username string, pageable *common.Pageable, filter UsernameSearchFilter) ([]*model.Player, *common.PageData, error)
+	PlayerLogout(ctx context.Context, playerId uuid.UUID, lastOnline time.Time, addedPlaytime time.Duration) error
 
 	CreateLoginSession(ctx context.Context, session *model.LoginSession) error
 	SetLoginSessionLogoutTime(ctx context.Context, playerId uuid.UUID, logoutTime time.Time) error

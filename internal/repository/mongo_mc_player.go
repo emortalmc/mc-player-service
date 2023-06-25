@@ -13,6 +13,32 @@ import (
 	"time"
 )
 
+func (m *mongoRepository) PlayerLogout(ctx context.Context, playerId uuid.UUID, lastOnline time.Time, addedPlaytime time.Duration) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	res, err := m.playerCollection.UpdateByID(ctx, playerId, bson.M{
+		"$unset": bson.M{
+			"currentServer": "",
+		},
+		"$set": bson.M{
+			"lastOnline": lastOnline,
+		},
+		"$inc": bson.M{
+			"totalPlaytime": addedPlaytime.Nanoseconds(),
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	if res.MatchedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+
+	return nil
+}
+
 func (m *mongoRepository) GetPlayer(ctx context.Context, playerId uuid.UUID) (*model.Player, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()

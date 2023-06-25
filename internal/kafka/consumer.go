@@ -169,20 +169,25 @@ func (c *consumer) handlePlayerDisconnectMessage(ctx context.Context, kafkaMsg *
 		return
 	}
 
-	p, err := c.repo.GetPlayer(ctx, pId)
-	if err != nil {
-		c.logger.Errorw("error getting player", "error", err)
+	if err := c.repo.PlayerLogout(ctx, pId, kafkaMsg.Time, s.GetDuration()); err != nil {
+		c.logger.Errorw("error logging out player", "error", err)
 		return
 	}
 
-	p.CurrentServer = nil
-	p.TotalPlaytime += s.GetDuration()
-	p.LastOnline = kafkaMsg.Time
-
-	if err := c.repo.SavePlayer(ctx, p, false); err != nil {
-		c.logger.Errorw("error saving player", "error", err)
-		return
-	}
+	//p, err := c.repo.GetPlayer(ctx, pId)
+	//if err != nil {
+	//	c.logger.Errorw("error getting player", "error", err)
+	//	return
+	//}
+	//
+	//p.CurrentServer = nil
+	//p.TotalPlaytime += s.GetDuration()
+	//p.LastOnline = kafkaMsg.Time
+	//
+	//if err := c.repo.SavePlayer(ctx, p, false); err != nil {
+	//	c.logger.Errorw("error saving player", "error", err)
+	//	return
+	//}
 }
 
 func (c *consumer) handlePlayerSwitchServerMessage(ctx context.Context, _ *kafka.Message, uncastMsg proto.Message) {
