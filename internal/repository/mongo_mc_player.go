@@ -18,15 +18,9 @@ func (m *mongoRepository) PlayerLogout(ctx context.Context, playerId uuid.UUID, 
 	defer cancel()
 
 	res, err := m.playerCollection.UpdateByID(ctx, playerId, bson.M{
-		"$unset": bson.M{
-			"currentServer": "",
-		},
-		"$set": bson.M{
-			"lastOnline": lastOnline,
-		},
-		"$inc": bson.M{
-			"totalPlaytime": addedPlaytime.Nanoseconds(),
-		},
+		"$unset": bson.M{"currentServer": ""},
+		"$set":   bson.M{"lastOnline": lastOnline},
+		"$inc":   bson.M{"totalPlaytime": addedPlaytime.Nanoseconds()},
 	})
 	if err != nil {
 		return err

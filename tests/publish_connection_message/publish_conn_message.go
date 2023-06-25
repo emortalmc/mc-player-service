@@ -30,7 +30,16 @@ func main() {
 		ServerId: "test-server-1111",
 	}
 
-	err := w.WriteMessages(context.Background(), createKafkaMessage(connMsg), createKafkaMessage(switchMsg))
+	logoutMsg := &common.PlayerDisconnectMessage{
+		PlayerId:       pIdStr,
+		PlayerUsername: "Expectational",
+	}
+
+	err := w.WriteMessages(context.Background(),
+		createKafkaMessage(connMsg),
+		createKafkaMessage(switchMsg),
+		createKafkaMessage(logoutMsg),
+	)
 	if err != nil {
 		panic(err)
 	}
