@@ -100,6 +100,12 @@ func (m *mongoRepository) GetFleetPlayerCounts(ctx context.Context, fleetNames [
 		resultMap[r.FleetName] = r.Count
 	}
 
+	for _, fleetName := range fleetNames {
+		if _, ok := resultMap[fleetName]; !ok {
+			resultMap[fleetName] = 0
+		}
+	}
+
 	return resultMap, nil
 }
 
