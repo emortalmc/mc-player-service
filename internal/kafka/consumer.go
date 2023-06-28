@@ -22,7 +22,7 @@ import (
 )
 
 const connectionsTopic = "mc-connections"
-const permissionsTopic = "permissions"
+const permissionsTopic = "permission-manager"
 
 type consumer struct {
 	logger *zap.SugaredLogger
