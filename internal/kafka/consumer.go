@@ -18,7 +18,6 @@ import (
 	"mc-player-service/internal/repository/model"
 	"mc-player-service/internal/utils"
 	"sync"
-	"time"
 )
 
 const connectionsTopic = "mc-connections"
@@ -48,8 +47,6 @@ func NewConsumer(ctx context.Context, wg *sync.WaitGroup, config *config.KafkaCo
 		ErrorLogger: kafka.LoggerFunc(func(format string, args ...interface{}) {
 			logger.Errorw(fmt.Sprintf(format, args...))
 		}),
-
-		MaxWait: 5 * time.Second,
 	})
 
 	c := &consumer{
