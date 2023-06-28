@@ -17,6 +17,9 @@ badges:
       lore:
         - "<i:false><gold>A more important staff member of EmortalMC</gold>"
 
+    automaticGrants:
+      permissionRole: "owner"
+
   staff:
     id: staff
     priority: 200
@@ -34,6 +37,9 @@ badges:
       displayName: "<i:false><dark_purple>Staff</dark_purple> \uE006"
       lore:
         - "<i:false><gold>A staff member of EmortalMC</gold>"
+
+    automaticGrants:
+      permissionRole: "staff"
 
   contributor_4:
     id: contributor_4
