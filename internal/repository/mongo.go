@@ -62,9 +62,8 @@ func NewMongoRepository(ctx context.Context, logger *zap.SugaredLogger, wg *sync
 var (
 	playerIndexes = []mongo.IndexModel{
 		{ // Allows for username search
-			Keys: bson.M{"currentUsername": "text"},
-			Options: options.Index().
-				SetName("currentUsername_text"),
+			Keys:    bson.M{"currentUsername": "text"},
+			Options: options.Index().SetName("currentUsername_text"),
 		},
 		{ // Allows for case-insensitive matching
 			Keys: bson.M{"currentUsername": 1},
@@ -73,21 +72,18 @@ var (
 				SetName("currentUsername_ignoreCase"),
 		},
 		{ // Regular matching
-			Keys: bson.M{"currentUsername": 1},
-			Options: options.Index().
-				SetName("currentUsername"),
+			Keys:    bson.M{"currentUsername": 1},
+			Options: options.Index().SetName("currentUsername"),
 		},
 
 		// Player tracking
 		{
-			Keys: bson.M{"currentServer.serverId": 1},
-			Options: options.Index().
-				SetName("currentServer_serverId"),
+			Keys:    bson.M{"currentServer.serverId": 1},
+			Options: options.Index().SetName("currentServer_serverId"),
 		},
 		{
-			Keys: bson.M{"currentServer.fleetName": 1},
-			Options: options.Index().
-				SetName("currentServer_fleetName"),
+			Keys:    bson.M{"currentServer.fleetName": 1},
+			Options: options.Index().SetName("currentServer_fleetName"),
 		},
 	}
 
