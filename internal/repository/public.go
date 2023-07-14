@@ -23,6 +23,11 @@ type Repository interface {
 
 	CreatePlayerUsername(ctx context.Context, username *model.PlayerUsername) error
 
+	// Stats
+
+	GetTotalUniquePlayers(ctx context.Context) (int64, error)
+	GetTotalPlaytimeHours(ctx context.Context) (int64, error)
+
 	// Player Tracker
 
 	SetPlayerServerAndFleet(ctx context.Context, playerId uuid.UUID, serverId string, fleet string) error

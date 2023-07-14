@@ -20,7 +20,7 @@ func (m *mongoRepository) PlayerLogout(ctx context.Context, playerId uuid.UUID, 
 	res, err := m.playerCollection.UpdateByID(ctx, playerId, bson.M{
 		"$unset": bson.M{"currentServer": ""},
 		"$set":   bson.M{"lastOnline": lastOnline},
-		"$inc":   bson.M{"totalPlaytime": addedPlaytime.Nanoseconds()},
+		"$inc":   bson.M{"totalPlaytime": addedPlaytime.Milliseconds()},
 	})
 	if err != nil {
 		return err
@@ -211,4 +211,44 @@ func (m *mongoRepository) CreatePlayerUsername(ctx context.Context, username *mo
 
 	_, err := m.usernameCollection.InsertOne(ctx, username)
 	return err
+}
+
+func (m *mongoRepository) GetTotalUniquePlayers(ctx context.Context) (int64, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	return m.playerCollection.CountDocuments(ctx, bson.M{})
+}
+
+var MillisInHour = time.Hour.Milliseconds()
+
+func (m *mongoRepository) GetTotalPlaytimeHours(ctx context.Context) (int64, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	pipeline := []bson.M{
+		{
+			"$group": bson.M{
+				"_id":   nil,
+				"total": bson.M{"$sum": "$totalPlaytime"},
+			},
+		},
+	}
+
+	cursor, err := m.playerCollection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, err
+	}
+
+	var mongoResult []bson.M
+	err = cursor.All(ctx, &mongoResult)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(mongoResult) == 0 {
+		return 0, nil
+	}
+
+	return mongoResult[0]["total"].(int64) / MillisInHour, nil
 }

@@ -145,6 +145,24 @@ func (s *mcPlayerService) GetLoginSessions(ctx context.Context, req *pb.GetLogin
 	}, nil
 }
 
+func (s *mcPlayerService) GetStatTotalUniquePlayers(ctx context.Context, _ *pb.GetStatTotalUniquePlayersRequest) (*pb.GetStatTotalUniquePlayersResponse, error) {
+	count, err := s.repo.GetTotalUniquePlayers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting total unique players: %w", err)
+	}
+
+	return &pb.GetStatTotalUniquePlayersResponse{Count: count}, nil
+}
+
+func (s *mcPlayerService) GetStatTotalPlaytime(ctx context.Context, _ *pb.GetStatTotalPlaytimeRequest) (*pb.GetStatTotalPlaytimeResponse, error) {
+	count, err := s.repo.GetTotalPlaytimeHours(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting total playtime: %w", err)
+	}
+
+	return &pb.GetStatTotalPlaytimeResponse{PlaytimeHours: count}, nil
+}
+
 func (s *mcPlayerService) getOrCreateMcPlayer(ctx context.Context, pId uuid.UUID) (*mcplayer.McPlayer, error) {
 	p, err := s.repo.GetPlayer(ctx, pId)
 	if err != nil {

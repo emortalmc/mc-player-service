@@ -149,5 +149,7 @@ func createCodecRegistry() *bsoncodec.Registry {
 	return bson.NewRegistryBuilder().
 		RegisterTypeEncoder(registrytypes.UUIDType, bsoncodec.ValueEncoderFunc(registrytypes.UuidEncodeValue)).
 		RegisterTypeDecoder(registrytypes.UUIDType, bsoncodec.ValueDecoderFunc(registrytypes.UuidDecodeValue)).
+		RegisterTypeEncoder(registrytypes.DurationType, bsoncodec.ValueEncoderFunc(registrytypes.DurationEncodeValue)).
+		RegisterTypeDecoder(registrytypes.DurationType, bsoncodec.ValueDecoderFunc(registrytypes.DurationDecodeValue)).
 		Build()
 }
