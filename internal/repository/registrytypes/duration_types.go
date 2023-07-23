@@ -1,9 +1,9 @@
 package registrytypes
 
 import (
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonrw"
-	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"reflect"
 	"time"
 )
@@ -30,7 +30,7 @@ func DurationDecodeValue(dc bsoncodec.DecodeContext, vr bsonrw.ValueReader, val 
 	var data int64
 	var err error
 	switch vrType := vr.Type(); vrType {
-	case bsontype.Int64:
+	case bson.TypeInt64:
 		data, err = vr.ReadInt64()
 	default:
 		return bsoncodec.ValueDecoderError{Name: "durationDecodeValue", Types: []reflect.Type{DurationType}, Received: val}
