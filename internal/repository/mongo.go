@@ -146,10 +146,12 @@ func (m *mongoRepository) createCollIndexes(ctx context.Context, coll *mongo.Col
 }
 
 func createCodecRegistry() *bsoncodec.Registry {
-	return bson.NewRegistryBuilder().
-		RegisterTypeEncoder(registrytypes.UUIDType, bsoncodec.ValueEncoderFunc(registrytypes.UuidEncodeValue)).
-		RegisterTypeDecoder(registrytypes.UUIDType, bsoncodec.ValueDecoderFunc(registrytypes.UuidDecodeValue)).
-		RegisterTypeEncoder(registrytypes.DurationType, bsoncodec.ValueEncoderFunc(registrytypes.DurationEncodeValue)).
-		RegisterTypeDecoder(registrytypes.DurationType, bsoncodec.ValueDecoderFunc(registrytypes.DurationDecodeValue)).
-		Build()
+	r := bson.NewRegistry()
+
+	r.RegisterTypeEncoder(registrytypes.UUIDType, bsoncodec.ValueEncoderFunc(registrytypes.UuidEncodeValue))
+	r.RegisterTypeDecoder(registrytypes.UUIDType, bsoncodec.ValueDecoderFunc(registrytypes.UuidDecodeValue))
+	r.RegisterTypeEncoder(registrytypes.DurationType, bsoncodec.ValueEncoderFunc(registrytypes.DurationEncodeValue))
+	r.RegisterTypeDecoder(registrytypes.DurationType, bsoncodec.ValueDecoderFunc(registrytypes.DurationDecodeValue))
+
+	return r
 }
