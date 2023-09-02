@@ -28,8 +28,5 @@ func createLogger(cfg *config.Config) (logger *zap.Logger, err error) {
 	} else {
 		logger, err = zap.NewProduction()
 	}
-	if err != nil {
-		return nil, err
-	}
-	return logger, nil
+	return
 }
