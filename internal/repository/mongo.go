@@ -145,6 +145,10 @@ func (m *mongoRepository) createCollIndexes(ctx context.Context, coll *mongo.Col
 	return len(result), nil
 }
 
+func (m *mongoRepository) Ping(ctx context.Context) error {
+	return m.database.Client().Ping(ctx, nil)
+}
+
 func createCodecRegistry() *bsoncodec.Registry {
 	r := bson.NewRegistry()
 

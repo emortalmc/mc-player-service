@@ -10,9 +10,11 @@ import (
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 	badgeh "mc-player-service/internal/badge"
 	"mc-player-service/internal/config"
+	"mc-player-service/internal/healthprovider"
 	"mc-player-service/internal/repository"
 	"net"
 	"sync"
@@ -40,6 +42,9 @@ func RunServices(ctx context.Context, logger *zap.SugaredLogger, wg *sync.WaitGr
 		reflection.Register(s)
 	}
 
+	healthSrv := healthprovider.Create(ctx, repo)
+
+	grpc_health_v1.RegisterHealthServer(s, healthSrv)
 	mcplayer.RegisterMcPlayerServer(s, newMcPlayerService(repo))
 	badge.RegisterBadgeManagerServer(s, newBadgeService(repo, badgeH, badgeCfg))
 	mcplayer.RegisterPlayerTrackerServer(s, newPlayerTrackerService(repo))

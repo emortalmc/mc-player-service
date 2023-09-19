@@ -9,6 +9,8 @@ import (
 )
 
 type Repository interface {
+	Ping(ctx context.Context) error
+
 	GetPlayer(ctx context.Context, id uuid.UUID) (*model.Player, error)
 	GetPlayers(ctx context.Context, ids []uuid.UUID) ([]*model.Player, error)
 	SavePlayer(ctx context.Context, player *model.Player, upsert bool) error

@@ -24,21 +24,21 @@ func main() {
 		PlayerUsername: "Expectational",
 		ServerId:       "test-proxy-0000",
 	}
-
-	switchMsg := &common.PlayerSwitchServerMessage{
-		PlayerId: pIdStr,
-		ServerId: "test-server-1111",
-	}
-
-	logoutMsg := &common.PlayerDisconnectMessage{
-		PlayerId:       pIdStr,
-		PlayerUsername: "Expectational",
-	}
+	//
+	//switchMsg := &common.PlayerSwitchServerMessage{
+	//	PlayerId: pIdStr,
+	//	ServerId: "test-server-1111",
+	//}
+	//
+	//logoutMsg := &common.PlayerDisconnectMessage{
+	//	PlayerId:       pIdStr,
+	//	PlayerUsername: "Expectational",
+	//}
 
 	err := w.WriteMessages(context.Background(),
 		createKafkaMessage(connMsg),
-		createKafkaMessage(switchMsg),
-		createKafkaMessage(logoutMsg),
+		//createKafkaMessage(switchMsg),
+		//createKafkaMessage(logoutMsg),
 	)
 	if err != nil {
 		panic(err)
