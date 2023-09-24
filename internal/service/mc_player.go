@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	pb "github.com/emortalmc/proto-specs/gen/go/grpc/mcplayer"
 	"github.com/emortalmc/proto-specs/gen/go/model/common"
@@ -74,7 +75,7 @@ func (s *mcPlayerService) GetPlayers(ctx context.Context, req *pb.GetPlayersRequ
 func (s *mcPlayerService) GetPlayerByUsername(ctx context.Context, req *pb.PlayerUsernameRequest) (*pb.GetPlayerByUsernameResponse, error) {
 	p, err := s.repo.GetPlayerByUsername(ctx, req.Username, true)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, status.Error(codes.NotFound, fmt.Sprintf("player with username %s not found", req.Username))
 		}
 		return nil, err
@@ -181,7 +182,7 @@ func (s *mcPlayerService) createMcPlayerFromPlayer(ctx context.Context, p *model
 		var err error
 		session, err = s.repo.GetCurrentLoginSession(ctx, p.Id)
 		if err != nil {
-			return nil, fmt.Errorf("error getting current login session: %w", err)
+			return nil, fmt.Errorf("error getting current login session (id: %s): %w", p.Id, err)
 		}
 	}
 

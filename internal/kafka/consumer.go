@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/emortalmc/proto-specs/gen/go/message/common"
 	permmsg "github.com/emortalmc/proto-specs/gen/go/message/permission"
@@ -91,7 +92,7 @@ func (c *consumer) handlePlayerConnectMessage(ctx context.Context, kafkaM *kafka
 	p, err := c.repo.GetPlayer(ctx, pId)
 	updatedUsername := false
 
-	if err != nil && err != mongo.ErrNoDocuments {
+	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
 		c.logger.Errorw("error getting player", "error", err)
 		return
 	}
@@ -156,7 +157,7 @@ func (c *consumer) handlePlayerDisconnectMessage(ctx context.Context, kafkaMsg *
 
 	s, err := c.repo.GetCurrentLoginSession(ctx, pId)
 	if err != nil {
-		c.logger.Errorw("error getting current login session", "error", err)
+		c.logger.Errorw("error getting current login session (id: %s)", "error", pId, err)
 		return
 	}
 
