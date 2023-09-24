@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: mc-player
-          image: ghcr.io/emortalmc/mc-player-service:1fb4dfdc55db2a2f8e33f4b5775b734c5b1ca657
+          image: ghcr.io/emortalmc/mc-player-service:a6c389952fe6e3fbf4f1bf831085aad7b6a903b2
           ports:
             - name: grpc
               containerPort: 9010
