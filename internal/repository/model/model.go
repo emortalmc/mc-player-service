@@ -1,6 +1,7 @@
 package model
 
 import (
+	commonmodel "github.com/emortalmc/proto-specs/gen/go/model/common"
 	"github.com/emortalmc/proto-specs/gen/go/model/mcplayer"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -10,8 +11,9 @@ import (
 )
 
 type Player struct {
-	Id              uuid.UUID `bson:"_id"`
-	CurrentUsername string    `bson:"currentUsername"`
+	Id              uuid.UUID   `bson:"_id"`
+	CurrentUsername string      `bson:"currentUsername"`
+	CurrentSkin     *PlayerSkin `bson:"currentSkin,omitempty"` // Only null as it didn't use to be stored
 
 	FirstLogin time.Time `bson:"firstLogin"`
 
@@ -38,6 +40,7 @@ func (p *Player) ToProto(session *LoginSession) *mcplayer.McPlayer {
 		CurrentSession:   session.ToProto(),
 		HistoricPlayTime: durationpb.New(p.TotalPlaytime),
 		CurrentServer:    p.CurrentServer.ToProto(),
+		CurrentSkin:      p.CurrentSkin.ToProto(),
 	}
 }
 
@@ -78,6 +81,29 @@ func (s *CurrentServer) ToProto() *mcplayer.CurrentServer {
 	return &mcplayer.CurrentServer{
 		ServerId: s.ServerId,
 		ProxyId:  s.ProxyId,
+	}
+}
+
+type PlayerSkin struct {
+	Texture   string `bson:"texture"`
+	Signature string `bson:"signature"`
+}
+
+func PlayerSkinFromProto(s *commonmodel.PlayerSkin) *PlayerSkin {
+	return &PlayerSkin{
+		Texture:   s.Texture,
+		Signature: s.Signature,
+	}
+}
+
+func (s *PlayerSkin) ToProto() *commonmodel.PlayerSkin {
+	if s == nil {
+		return nil
+	}
+
+	return &commonmodel.PlayerSkin{
+		Texture:   s.Texture,
+		Signature: s.Signature,
 	}
 }
 

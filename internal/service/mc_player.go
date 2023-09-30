@@ -167,7 +167,7 @@ func (s *mcPlayerService) GetStatTotalPlaytime(ctx context.Context, _ *pb.GetSta
 func (s *mcPlayerService) getOrCreateMcPlayer(ctx context.Context, pId uuid.UUID) (*mcplayer.McPlayer, error) {
 	p, err := s.repo.GetPlayer(ctx, pId)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, status.Error(codes.NotFound, fmt.Sprintf("player with id %s not found", pId.String()))
 		}
 		return nil, err

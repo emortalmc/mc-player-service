@@ -87,21 +87,24 @@ func (c *consumer) handlePlayerConnectMessage(ctx context.Context, kafkaM *kafka
 		return
 	}
 
-	server := &model.CurrentServer{ProxyId: m.ServerId}
-
 	p, err := c.repo.GetPlayer(ctx, pId)
-	updatedUsername := false
 
 	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
 		c.logger.Errorw("error getting player", "error", err)
 		return
 	}
 
+	server := &model.CurrentServer{ProxyId: m.ServerId}
+	updatedUsername := false
+
+	skin := model.PlayerSkinFromProto(m.PlayerSkin)
+
 	// err is ErrNoDocuments
 	if err != nil {
 		p = &model.Player{
 			Id:              pId,
 			CurrentUsername: m.PlayerUsername,
+			CurrentSkin:     skin,
 			FirstLogin:      kafkaM.Time,
 			LastOnline:      kafkaM.Time,
 			TotalPlaytime:   0,
@@ -113,6 +116,7 @@ func (c *consumer) handlePlayerConnectMessage(ctx context.Context, kafkaM *kafka
 			p.CurrentUsername = m.PlayerUsername
 			updatedUsername = true
 		}
+		p.CurrentSkin = skin
 		p.CurrentServer = server
 	}
 
