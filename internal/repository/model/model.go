@@ -90,6 +90,10 @@ type PlayerSkin struct {
 }
 
 func PlayerSkinFromProto(s *commonmodel.PlayerSkin) *PlayerSkin {
+	if s == nil {
+		return nil
+	}
+
 	return &PlayerSkin{
 		Texture:   s.Texture,
 		Signature: s.Signature,
