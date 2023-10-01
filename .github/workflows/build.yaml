@@ -11,31 +11,14 @@ jobs:
     steps:
       - uses: "emortalmc/actions/go/lint@main"
 
-  build:
-    runs-on: "ubuntu-latest"
-    steps:
-      - uses: "emortalmc/actions/go/build-single@main"
-
   publish:
-    needs: [ "lint", "build" ]
+    needs: "lint"
     runs-on: "ubuntu-latest"
-    strategy:
-      matrix:
-        platform: [ linux/amd64, linux/arm64 ]
-
     steps:
-      - uses: "emortalmc/actions/go/publish-only-single@main"
+      - uses: "emortalmc/actions/go/publish-single@main"
         with:
           registry-password: "${{ secrets.GITHUB_TOKEN }}"
 
-#  publish:
-#    needs: "lint"
-#    runs-on: "ubuntu-latest"
-#    steps:
-#      - uses: "emortalmc/actions/go/publish-single@main"
-#        with:
-#          registry-password: "${{ secrets.GITHUB_TOKEN }}"
-#
   deploy:
     needs: "publish"
     runs-on: "ubuntu-latest"
