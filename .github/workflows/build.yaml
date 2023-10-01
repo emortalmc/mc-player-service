@@ -2,14 +2,19 @@ name: "Build and push"
 
 on:
   push:
-    branches: [main]
-  pull_request: {}
+    branches: [ main ]
+  pull_request: { }
 
 jobs:
   lint:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "emortalmc/actions/go/lint@main"
+
+  build:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "emortalmc/actions/go/build-single@main"
 
   publish:
     needs: "lint"
