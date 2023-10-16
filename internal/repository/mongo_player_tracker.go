@@ -62,6 +62,29 @@ func (m *mongoRepository) GetPlayerCount(ctx context.Context, serverId *string, 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	query := createAdapterQuery(serverId, fleetNames)
+	return m.playerCollection.CountDocuments(ctx, query)
+}
+
+func (m *mongoRepository) GetOnlinePlayers(ctx context.Context, serverId *string, fleetNames []string) ([]*model.OnlinePlayer, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	query := createAdapterQuery(serverId, fleetNames)
+	cursor, err := m.playerCollection.Find(ctx, query, options.Find().SetProjection(model.OnlinePlayerProjection))
+	if err != nil {
+		return nil, fmt.Errorf("failed to find online players: %w", err)
+	}
+
+	var mongoResults []*model.OnlinePlayer
+	if err := cursor.All(ctx, &mongoResults); err != nil {
+		return nil, fmt.Errorf("failed to decode online players: %w", err)
+	}
+
+	return mongoResults, nil
+}
+
+func createAdapterQuery(serverId *string, fleetNames []string) bson.M {
 	query := bson.M{}
 	if serverId != nil {
 		query["currentServer.serverId"] = serverId
@@ -71,8 +94,7 @@ func (m *mongoRepository) GetPlayerCount(ctx context.Context, serverId *string, 
 		// global
 		query["currentServer"] = bson.M{"$exists": true}
 	}
-
-	return m.playerCollection.CountDocuments(ctx, query)
+	return query
 }
 
 func (m *mongoRepository) GetFleetPlayerCounts(ctx context.Context, fleetNames []string) (map[string]int64, error) {

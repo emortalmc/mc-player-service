@@ -43,6 +43,9 @@ type Repository interface {
 	// 3. globally if neither are present
 	GetPlayerCount(ctx context.Context, serverId *string, fleetNames []string) (int64, error)
 
+	// GetOnlinePlayers functions the same as GetPlayerCount
+	GetOnlinePlayers(ctx context.Context, serverId *string, fleetNames []string) ([]*model.OnlinePlayer, error)
+
 	GetFleetPlayerCounts(ctx context.Context, fleetNames []string) (map[string]int64, error)
 
 	// Badges

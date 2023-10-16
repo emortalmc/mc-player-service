@@ -82,3 +82,19 @@ func (s *playerTrackerService) GetFleetPlayerCounts(ctx context.Context, req *pb
 
 	return &pb.GetFleetsPlayerCountResponse{FleetPlayerCounts: counts}, nil
 }
+
+// GetGlobalPlayersSummary note that this won't scale - not the code, the concept in general.
+// If we have like 300 players the command (/list ...) will be unusable kekw. Chat output will be too long
+func (s *playerTrackerService) GetGlobalPlayersSummary(ctx context.Context, req *pb.GetGlobalPlayersSummaryRequest) (*pb.GetGlobalPlayersSummaryResponse, error) {
+	players, err := s.repo.GetOnlinePlayers(ctx, req.ServerId, req.FleetNames)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get scoped online players")
+	}
+
+	var protoPlayers = make([]*pbmodel.OnlinePlayer, len(players))
+	for i, p := range players {
+		protoPlayers[i] = p.ToProto()
+	}
+
+	return &pb.GetGlobalPlayersSummaryResponse{Players: protoPlayers}, nil
+}

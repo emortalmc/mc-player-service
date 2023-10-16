@@ -3,7 +3,7 @@ module mc-player-service
 go 1.21
 
 require (
-	github.com/emortalmc/proto-specs/gen/go v0.0.0-20230930151757-f74c88cbd621
+	github.com/emortalmc/proto-specs/gen/go v0.0.0-20231016200456-dc8a77542dad
 	github.com/google/uuid v1.3.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/segmentio/kafka-go v0.4.43
@@ -30,7 +30,6 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.10.0 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
-	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
