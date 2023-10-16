@@ -81,6 +81,7 @@ func (s *CurrentServer) ToProto() *mcplayer.CurrentServer {
 	return &mcplayer.CurrentServer{
 		ServerId: s.ServerId,
 		ProxyId:  s.ProxyId,
+		FleetName: s.FleetName,
 	}
 }
 
