@@ -166,3 +166,19 @@ badges:
       displayName: "<i:false><color:#7b5c00>Absolute Loser</color> \uE00D"
       lore:
         - "<i:false><gold>Someone with this rank is an absolute loser and is not to be spoken to</gold>"
+
+  hollowcube:
+    id: hollowcube
+    priority: 99999999 # Doesn't matter because we're hiding it in the GUI
+    required: false
+    friendlyName: "HollowCube"
+
+    hoverText:
+      - "<gold>Badge: <color:#7b5c00>HollowCube</color></gold>"
+      - ""
+      - "<gold>Someone with this rank is an absolute loser and is not to be spoken to</gold>"
+
+    guiItem:
+      material: "minecraft:air"
+      displayName: ""
+      lore: []
