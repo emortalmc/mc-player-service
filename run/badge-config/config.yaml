@@ -172,6 +172,7 @@ badges:
     priority: 99999999 # Doesn't matter because we're hiding it in the GUI
     required: false
     friendlyName: "HollowCube"
+    chatString: "\uE011"
 
     hoverText:
       - "<gold>Badge: <color:#7b5c00>HollowCube</color></gold>"
