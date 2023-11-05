@@ -177,13 +177,6 @@ func (c *consumer) handlePlayerDisconnectMessage(ctx context.Context, kafkaMsg *
 		return
 	}
 
-	count, err := c.repo.GetPlayerCount(ctx, nil, nil)
-	if err != nil {
-		c.logger.Errorw("error getting player count", "error", err)
-	}
-
-	c.webhook.SendPlayerJoinWebhook(m.PlayerUsername, m.PlayerId, count)
-
 	err = c.repo.SetLoginSessionLogoutTime(ctx, pId, kafkaMsg.Time)
 	if err != nil {
 		c.logger.Errorw("error setting logout time", "error", err)
@@ -194,6 +187,13 @@ func (c *consumer) handlePlayerDisconnectMessage(ctx context.Context, kafkaMsg *
 		c.logger.Errorw("error logging out player", "error", err)
 		return
 	}
+
+	count, err := c.repo.GetPlayerCount(ctx, nil, nil)
+	if err != nil {
+		c.logger.Errorw("error getting player count", "error", err)
+	}
+
+	c.webhook.SendPlayerLeftWebhook(m.PlayerUsername, m.PlayerId, count)
 
 	p, err := c.repo.GetPlayer(ctx, pId)
 	if err != nil {

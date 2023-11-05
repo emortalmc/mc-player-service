@@ -60,7 +60,7 @@ func (w *Webhook) SendPlayerJoinWebhook(username string, uuid string, plrCount i
 
 	jsonData, err := json.Marshal(jsonData{
 		username,
-		fmt.Sprintf("Joined the server! (%d %s) `k8s`", plrCount, playersText),
+		fmt.Sprintf("Joined the server! (%d %s)", plrCount, playersText),
 		fmt.Sprintf("https://mc-heads.net/avatar/%s/100", uuid),
 	})
 	if err != nil {
@@ -79,7 +79,7 @@ func (w *Webhook) SendPlayerLeftWebhook(username string, uuid string, plrCount i
 
 	jsonData, err := json.Marshal(jsonData{
 		username,
-		fmt.Sprintf("Left the server! (%d %s) `k8s`", plrCount, playersText),
+		fmt.Sprintf("Left the server! (%d %s)", plrCount, playersText),
 		fmt.Sprintf("https://mc-heads.net/avatar/%s/100", uuid),
 	})
 	if err != nil {
