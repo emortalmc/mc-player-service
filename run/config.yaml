@@ -8,3 +8,5 @@ mongodb:
   uri: mongodb://localhost:27017
 
 port: 10004
+
+discordWebhookUrl: https://discord.com/api/webhooks/0000000000000000000/AAAAAAAAAAAAAA-BBBBBBBBBBB-CCCCC-DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD

@@ -18,6 +18,7 @@ import (
 	"mc-player-service/internal/repository"
 	"mc-player-service/internal/repository/model"
 	"mc-player-service/internal/utils"
+	"mc-player-service/internal/webhook"
 	"sync"
 )
 
@@ -32,13 +33,15 @@ type consumer struct {
 	badges map[string]*config.Badge
 
 	reader *kafka.Reader
+
+	webhook *webhook.Webhook
 }
 
-func NewConsumer(ctx context.Context, wg *sync.WaitGroup, config *config.KafkaConfig, logger *zap.SugaredLogger, repo repository.Repository,
+func NewConsumer(ctx context.Context, wg *sync.WaitGroup, config *config.Config, logger *zap.SugaredLogger, repo repository.Repository,
 	badgeH badgeh.Handler, badgeCfg *config.BadgeConfig) {
 
 	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:     []string{fmt.Sprintf("%s:%d", config.Host, config.Port)},
+		Brokers:     []string{fmt.Sprintf("%s:%d", config.Kafka.Host, config.Kafka.Port)},
 		GroupID:     "mc-player-service",
 		GroupTopics: []string{connectionsTopic, permissionsTopic},
 
@@ -58,6 +61,8 @@ func NewConsumer(ctx context.Context, wg *sync.WaitGroup, config *config.KafkaCo
 		badges: badgeCfg.Badges,
 
 		reader: reader,
+
+		webhook: webhook.NewWebhook(config.DiscordWebhookUrl, logger),
 	}
 
 	handler := kafkautils.NewConsumerHandler(logger, reader)
@@ -136,6 +141,13 @@ func (c *consumer) handlePlayerConnectMessage(ctx context.Context, kafkaM *kafka
 		c.logger.Errorw("error creating login session", "error", err)
 	}
 
+	count, err := c.repo.GetPlayerCount(ctx, nil, nil)
+	if err != nil {
+		c.logger.Errorw("error getting player count", "error", err)
+	}
+
+	c.webhook.SendPlayerJoinWebhook(m.PlayerUsername, m.PlayerId, count)
+
 	if updatedUsername {
 		dbUsername := &model.PlayerUsername{
 			Id:       primitive.NewObjectIDFromTimestamp(kafkaM.Time),
@@ -176,12 +188,19 @@ func (c *consumer) handlePlayerDisconnectMessage(ctx context.Context, kafkaMsg *
 		return
 	}
 
+	count, err := c.repo.GetPlayerCount(ctx, nil, nil)
+	if err != nil {
+		c.logger.Errorw("error getting player count", "error", err)
+	}
+
+	c.webhook.SendPlayerLeftWebhook(m.PlayerUsername, m.PlayerId, count)
+
 	p, err := c.repo.GetPlayer(ctx, pId)
 	if err != nil {
 		c.logger.Errorw("error getting player", "error", err)
 		return
 	}
-	
+
 	p.CurrentServer = nil
 	p.TotalPlaytime += s.GetDuration()
 	p.LastOnline = kafkaMsg.Time
