@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "workingDir": "$PROJECT_DIR$/run",
+            "type": "command",
+            "program": "go",
+            "args": ["run", "mc-player-service/cmd"],
+            "name": "Run mcplayerservice",
+        }
+        
+    ]
+}

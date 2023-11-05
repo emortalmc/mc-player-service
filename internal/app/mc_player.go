@@ -34,7 +34,7 @@ func Run(cfg *config.Config, logger *zap.SugaredLogger) {
 
 	badgeHandler := badge.NewBadgeHandler(logger, repo, badgeCfg)
 
-	kafka.NewConsumer(ctx, wg, cfg.Kafka, logger, repo, badgeHandler, badgeCfg)
+	kafka.NewConsumer(ctx, wg, cfg, logger, repo, badgeHandler, badgeCfg)
 
 	service.RunServices(ctx, logger, wg, cfg, badgeHandler, badgeCfg, repo)
 

@@ -12,6 +12,8 @@ type Config struct {
 	Development bool
 
 	Port uint16
+
+	DiscordWebhookUrl string
 }
 
 type KafkaConfig struct {
