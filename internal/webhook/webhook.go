@@ -46,6 +46,11 @@ func (w *Webhook) sendWebhookMessage(payload []byte) {
 		return
 	}
 
+	if resp.StatusCode != 204 {
+		w.logger.Errorw("error on request", "status", resp.StatusCode, "url", w.discordWebhookUrl)
+		return
+	}
+
 	if err := resp.Body.Close(); err != nil {
 		w.logger.Errorw("error closing body", err)
 		return
