@@ -34,7 +34,7 @@ type consumer struct {
 
 	reader *kafka.Reader
 
-	webhook *webhook.Webhook
+	webhook webhook.Webhook
 }
 
 func NewConsumer(ctx context.Context, wg *sync.WaitGroup, config *config.Config, logger *zap.SugaredLogger, repo repository.Repository,
@@ -193,7 +193,7 @@ func (c *consumer) handlePlayerDisconnectMessage(ctx context.Context, kafkaMsg *
 		c.logger.Errorw("error getting player count", "error", err)
 	}
 
-	c.webhook.SendPlayerLeftWebhook(m.PlayerUsername, m.PlayerId, count)
+	c.webhook.SendPlayerLeaveWebhook(m.PlayerUsername, m.PlayerId, count)
 
 	p, err := c.repo.GetPlayer(ctx, pId)
 	if err != nil {

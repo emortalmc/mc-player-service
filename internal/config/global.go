@@ -13,6 +13,7 @@ type Config struct {
 
 	Port uint16
 
+	// DiscordWebhookUrl not required so may be empty
 	DiscordWebhookUrl string
 }
 

@@ -8,17 +8,21 @@ import (
 	"net/http"
 )
 
-type Webhook struct {
+type webhookImpl struct {
 	discordWebhookUrl string
 	logger            *zap.SugaredLogger
 	client            *http.Client
 }
 
-func NewWebhook(discordWebhookUrl string, logger *zap.SugaredLogger) *Webhook {
-	w := &Webhook{
+func NewWebhook(discordWebhookUrl string, logger *zap.SugaredLogger) Webhook {
+	w := &webhookImpl{
 		discordWebhookUrl: discordWebhookUrl,
 		logger:            logger,
 		client:            &http.Client{},
+	}
+
+	if w.discordWebhookUrl == "" {
+		w.logger.Warn("discord webhook url is not present, webhook messages will not be sent")
 	}
 
 	return w
@@ -30,7 +34,12 @@ type jsonData struct {
 	AvatarUrl string `json:"avatar_url"`
 }
 
-func (w *Webhook) sendWebhookMessage(payload []byte) {
+func (w *webhookImpl) sendWebhookMessage(payload []byte) {
+	if w.discordWebhookUrl == "" {
+		w.logger.Debugw("discord webhook url is nil, not sending webhook message")
+		return
+	}
+
 	req, err := http.NewRequest("POST", w.discordWebhookUrl, bytes.NewBuffer(payload))
 	if err != nil {
 		w.logger.Errorw("error on http post", err)
@@ -57,7 +66,7 @@ func (w *Webhook) sendWebhookMessage(payload []byte) {
 	}
 }
 
-func (w *Webhook) SendPlayerJoinWebhook(username string, uuid string, plrCount int64) {
+func (w *webhookImpl) SendPlayerJoinWebhook(username string, uuid string, plrCount int64) {
 	playersText := "players"
 	if plrCount == 1 {
 		playersText = "player"
@@ -76,7 +85,7 @@ func (w *Webhook) SendPlayerJoinWebhook(username string, uuid string, plrCount i
 	go w.sendWebhookMessage(jsonData)
 }
 
-func (w *Webhook) SendPlayerLeftWebhook(username string, uuid string, plrCount int64) {
+func (w *webhookImpl) SendPlayerLeaveWebhook(username string, uuid string, plrCount int64) {
 	playersText := "players"
 	if plrCount == 1 {
 		playersText = "player"
