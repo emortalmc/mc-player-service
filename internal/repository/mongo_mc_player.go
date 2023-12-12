@@ -94,7 +94,7 @@ func (m *mongoRepository) GetPlayerByUsername(ctx context.Context, username stri
 	return mongoResult, nil
 }
 
-func (m *mongoRepository) SearchPlayersByUsername(ctx context.Context, username string, pageable *common.Pageable, filter UsernameSearchFilter) ([]*model.Player, *common.PageData, error) {
+func (m *mongoRepository) SearchPlayersByUsername(ctx context.Context, username string, pageable *common.Pageable, filter *UsernameSearchFilter, ignoredPlayerIds []uuid.UUID) ([]*model.Player, *common.PageData, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -110,7 +110,13 @@ func (m *mongoRepository) SearchPlayersByUsername(ctx context.Context, username 
 	}
 	query := bson.M{"$and": queries}
 
+	if len(ignoredPlayerIds) > 0 {
+		query["$and"] = append(query["$and"].([]bson.M), bson.M{"_id": bson.M{"$nin": ignoredPlayerIds}})
+	}
+
 	// todo friend filters
+	// Get friends from relationship service
+	// add another and filter to the query to only include friends
 
 	page := int64(pageable.Page)
 	skip := page * int64(*pageable.Size)

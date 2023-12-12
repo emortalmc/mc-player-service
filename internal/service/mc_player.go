@@ -92,7 +92,7 @@ func (s *mcPlayerService) GetPlayerByUsername(ctx context.Context, req *pb.Playe
 }
 
 func (s *mcPlayerService) SearchPlayersByUsername(ctx context.Context, req *pb.SearchPlayersByUsernameRequest) (*pb.SearchPlayersByUsernameResponse, error) {
-	filter := repository.UsernameSearchFilter{
+	filter := &repository.UsernameSearchFilter{
 		OnlineOnly: req.FilterMethod == pb.SearchPlayersByUsernameRequest_ONLINE,
 		Friends:    req.FilterMethod == pb.SearchPlayersByUsernameRequest_FRIENDS,
 	}
@@ -106,7 +106,20 @@ func (s *mcPlayerService) SearchPlayersByUsername(ctx context.Context, req *pb.S
 		req.Pageable.Size = utils.PointerOf(uint64(20))
 	}
 
-	players, pageData, err := s.repo.SearchPlayersByUsername(ctx, req.SearchUsername, req.Pageable, filter)
+	var excludedPlayerIds []uuid.UUID
+	if req.ExcludedPlayerIds != nil {
+		excludedPlayerIds = make([]uuid.UUID, 0, len(req.ExcludedPlayerIds))
+
+		for _, id := range req.ExcludedPlayerIds {
+			pId, err := uuid.Parse(id)
+			if err != nil {
+				return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid player id %s", id))
+			}
+			excludedPlayerIds = append(excludedPlayerIds, pId)
+		}
+	}
+
+	players, pageData, err := s.repo.SearchPlayersByUsername(ctx, req.SearchUsername, req.Pageable, filter, excludedPlayerIds)
 	if err != nil {
 		return nil, fmt.Errorf("error searching for players: %w", err)
 	}
