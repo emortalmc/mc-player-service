@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/emortalmc/proto-specs/gen/go v0.0.0-20231212225453-a8938507297c
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/segmentio/kafka-go v0.4.43
 	github.com/spf13/viper v1.17.0
