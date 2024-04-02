@@ -26,7 +26,7 @@ type MongoDBConfig struct {
 	URI string
 }
 
-func LoadGlobalConfig() (config *Config, err error) {
+func LoadGlobalConfig() (config Config, err error) {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 

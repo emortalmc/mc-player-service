@@ -63,7 +63,7 @@ type BadgeAutomaticGrants struct {
 	PermissionRole     *string
 }
 
-func LoadBadgeConfig() (config *BadgeConfig, err error) {
+func LoadBadgeConfig() (config BadgeConfig, err error) {
 	v := viper.New()
 	v.AddConfigPath("./badge-config")
 	v.SetConfigName("config")

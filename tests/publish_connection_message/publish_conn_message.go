@@ -26,12 +26,12 @@ func main() {
 	}
 	//
 	//switchMsg := &common.PlayerSwitchServerMessage{
-	//	PlayerId: pIdStr,
-	//	ServerId: "test-server-1111",
+	//	PlayerID: pIdStr,
+	//	ServerID: "test-server-1111",
 	//}
 	//
 	//logoutMsg := &common.PlayerDisconnectMessage{
-	//	PlayerId:       pIdStr,
+	//	PlayerID:       pIdStr,
 	//	PlayerUsername: "Expectational",
 	//}
 

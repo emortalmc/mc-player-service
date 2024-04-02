@@ -10,19 +10,19 @@ import (
 
 type webhookImpl struct {
 	discordWebhookUrl string
-	logger            *zap.SugaredLogger
+	log               *zap.SugaredLogger
 	client            *http.Client
 }
 
-func NewWebhook(discordWebhookUrl string, logger *zap.SugaredLogger) Webhook {
+func NewWebhook(discordWebhookUrl string, log *zap.SugaredLogger) Webhook {
 	w := &webhookImpl{
 		discordWebhookUrl: discordWebhookUrl,
-		logger:            logger,
+		log:               log,
 		client:            &http.Client{},
 	}
 
 	if w.discordWebhookUrl == "" {
-		w.logger.Warn("discord webhook url is not present, webhook messages will not be sent")
+		w.log.Warn("discord webhook url is not present, webhook messages will not be sent")
 	}
 
 	return w
@@ -36,13 +36,13 @@ type jsonData struct {
 
 func (w *webhookImpl) sendWebhookMessage(payload []byte) {
 	if w.discordWebhookUrl == "" {
-		w.logger.Debugw("discord webhook url is nil, not sending webhook message")
+		w.log.Debugw("discord webhook url is nil, not sending webhook message")
 		return
 	}
 
 	req, err := http.NewRequest("POST", w.discordWebhookUrl, bytes.NewBuffer(payload))
 	if err != nil {
-		w.logger.Errorw("error on http post", err)
+		w.log.Errorw("error on http post", err)
 		return
 	}
 
@@ -51,17 +51,17 @@ func (w *webhookImpl) sendWebhookMessage(payload []byte) {
 
 	resp, err := w.client.Do(req)
 	if err != nil {
-		w.logger.Errorw("error on request", err)
+		w.log.Errorw("error on request", err)
 		return
 	}
 
 	if resp.StatusCode != 204 {
-		w.logger.Errorw("error on request", "status", resp.StatusCode, "url", w.discordWebhookUrl)
+		w.log.Errorw("error on request", "status", resp.StatusCode, "url", w.discordWebhookUrl)
 		return
 	}
 
 	if err := resp.Body.Close(); err != nil {
-		w.logger.Errorw("error closing body", err)
+		w.log.Errorw("error closing body", err)
 		return
 	}
 }
@@ -78,7 +78,7 @@ func (w *webhookImpl) SendPlayerJoinWebhook(username string, uuid string, plrCou
 		fmt.Sprintf("https://mc-heads.net/avatar/%s/100", uuid),
 	})
 	if err != nil {
-		w.logger.Errorw("error marshalling json", err)
+		w.log.Errorw("error marshalling json", err)
 		return
 	}
 
@@ -97,7 +97,7 @@ func (w *webhookImpl) SendPlayerLeaveWebhook(username string, uuid string, plrCo
 		fmt.Sprintf("https://mc-heads.net/avatar/%s/100", uuid),
 	})
 	if err != nil {
-		w.logger.Errorw("error marshalling json", err)
+		w.log.Errorw("error marshalling json", err)
 		return
 	}
 

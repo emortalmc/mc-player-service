@@ -13,11 +13,11 @@ import (
 	"time"
 )
 
-func (m *mongoRepository) PlayerLogout(ctx context.Context, playerId uuid.UUID, lastOnline time.Time, addedPlaytime time.Duration) error {
+func (m *mongoRepository) PlayerLogout(ctx context.Context, playerID uuid.UUID, lastOnline time.Time, addedPlaytime time.Duration) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	res, err := m.playerCollection.UpdateByID(ctx, playerId, bson.M{
+	res, err := m.playerCollection.UpdateByID(ctx, playerID, bson.M{
 		"$unset": bson.M{"currentServer": ""},
 		"$set":   bson.M{"lastOnline": lastOnline},
 		"$inc":   bson.M{"totalPlaytime": addedPlaytime.Milliseconds()},
@@ -33,20 +33,20 @@ func (m *mongoRepository) PlayerLogout(ctx context.Context, playerId uuid.UUID, 
 	return nil
 }
 
-func (m *mongoRepository) GetPlayer(ctx context.Context, playerId uuid.UUID) (*model.Player, error) {
+func (m *mongoRepository) GetPlayer(ctx context.Context, playerID uuid.UUID) (model.Player, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	var mongoResult model.Player
-	err := m.playerCollection.FindOne(ctx, bson.M{"_id": playerId}).Decode(&mongoResult)
+	err := m.playerCollection.FindOne(ctx, bson.M{"_id": playerID}).Decode(&mongoResult)
 	if err != nil {
-		return nil, err
+		return model.Player{}, err
 	}
 
-	return &mongoResult, nil
+	return mongoResult, nil
 }
 
-func (m *mongoRepository) GetPlayers(ctx context.Context, pIds []uuid.UUID) ([]*model.Player, error) {
+func (m *mongoRepository) GetPlayers(ctx context.Context, pIds []uuid.UUID) ([]model.Player, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -55,7 +55,7 @@ func (m *mongoRepository) GetPlayers(ctx context.Context, pIds []uuid.UUID) ([]*
 		return nil, err
 	}
 
-	var mongoResult []*model.Player
+	var mongoResult []model.Player
 	err = cursor.All(ctx, &mongoResult)
 	if err != nil {
 		return nil, err
@@ -64,15 +64,15 @@ func (m *mongoRepository) GetPlayers(ctx context.Context, pIds []uuid.UUID) ([]*
 	return mongoResult, nil
 }
 
-func (m *mongoRepository) SavePlayer(ctx context.Context, player *model.Player, upsert bool) error {
+func (m *mongoRepository) SavePlayer(ctx context.Context, player model.Player, upsert bool) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	_, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": player.Id}, bson.M{"$set": player}, options.Update().SetUpsert(upsert))
+	_, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": player.ID}, bson.M{"$set": player}, options.Update().SetUpsert(upsert))
 	return err
 }
 
-func (m *mongoRepository) GetPlayerByUsername(ctx context.Context, username string, ignoreCase bool) (*model.Player, error) {
+func (m *mongoRepository) GetPlayerByUsername(ctx context.Context, username string, ignoreCase bool) (model.Player, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -86,15 +86,15 @@ func (m *mongoRepository) GetPlayerByUsername(ctx context.Context, username stri
 		})
 	}
 
-	var mongoResult *model.Player
+	var mongoResult model.Player
 	err := m.playerCollection.FindOne(ctx, query, opts).Decode(&mongoResult)
 	if err != nil {
-		return nil, err
+		return model.Player{}, err
 	}
 	return mongoResult, nil
 }
 
-func (m *mongoRepository) SearchPlayersByUsername(ctx context.Context, username string, pageable *common.Pageable, filter *UsernameSearchFilter, ignoredPlayerIds []uuid.UUID) ([]*model.Player, *common.PageData, error) {
+func (m *mongoRepository) SearchPlayersByUsername(ctx context.Context, username string, pageable *common.Pageable, filter *UsernameSearchFilter, ignoredPlayerIds []uuid.UUID) ([]model.Player, *common.PageData, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -115,13 +115,13 @@ func (m *mongoRepository) SearchPlayersByUsername(ctx context.Context, username 
 	}
 
 	// todo friend filters
-	// Get friends from relationship service
+	// Get friends from relationship grpc
 	// add another and filter to the query to only include friends
 
 	page := int64(pageable.Page)
 	skip := page * int64(*pageable.Size)
 
-	var mongoResult []*model.Player
+	var mongoResult []model.Player
 	cursor, err := m.playerCollection.Find(ctx, query, options.Find().SetSkip(skip).SetLimit(int64(*pageable.Size)))
 
 	if err != nil {
@@ -150,7 +150,7 @@ func (m *mongoRepository) SearchPlayersByUsername(ctx context.Context, username 
 	return mongoResult, pageData, nil
 }
 
-func (m *mongoRepository) CreateLoginSession(ctx context.Context, session *model.LoginSession) error {
+func (m *mongoRepository) CreateLoginSession(ctx context.Context, session model.LoginSession) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -176,7 +176,7 @@ func (m *mongoRepository) SetLoginSessionLogoutTime(ctx context.Context, playerI
 	return nil
 }
 
-func (m *mongoRepository) GetCurrentLoginSession(ctx context.Context, playerId uuid.UUID) (*model.LoginSession, error) {
+func (m *mongoRepository) GetCurrentLoginSession(ctx context.Context, playerId uuid.UUID) (model.LoginSession, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -185,12 +185,12 @@ func (m *mongoRepository) GetCurrentLoginSession(ctx context.Context, playerId u
 		{"playerId": playerId}, {"logoutTime": bson.M{"$exists": false}},
 	}}).Decode(&mongoResult)
 	if err != nil {
-		return nil, err
+		return model.LoginSession{}, err
 	}
-	return &mongoResult, nil
+	return mongoResult, nil
 }
 
-func (m *mongoRepository) GetLoginSessions(ctx context.Context, playerId uuid.UUID, pageable *common.Pageable) ([]*model.LoginSession, error) {
+func (m *mongoRepository) GetLoginSessions(ctx context.Context, playerId uuid.UUID, pageable *common.Pageable) ([]model.LoginSession, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -202,7 +202,7 @@ func (m *mongoRepository) GetLoginSessions(ctx context.Context, playerId uuid.UU
 		return nil, err
 	}
 
-	var mongoResult []*model.LoginSession
+	var mongoResult []model.LoginSession
 	err = cursor.All(ctx, &mongoResult)
 	if err != nil {
 		return nil, err
@@ -211,7 +211,7 @@ func (m *mongoRepository) GetLoginSessions(ctx context.Context, playerId uuid.UU
 	return mongoResult, nil
 }
 
-func (m *mongoRepository) CreatePlayerUsername(ctx context.Context, username *model.PlayerUsername) error {
+func (m *mongoRepository) CreatePlayerUsername(ctx context.Context, username model.PlayerUsername) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go.uber.org/zap"
 	"log"
 	"mc-player-service/internal/app"
@@ -10,23 +11,23 @@ import (
 func main() {
 	cfg, err := config.LoadGlobalConfig()
 	if err != nil {
-		log.Fatal("failed to load config", err)
+		panic(fmt.Sprintf("failed to load config: %v", err))
 	}
 
 	unsugared, err := createLogger(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
-	logger := unsugared.Sugar()
+	log := unsugared.Sugar()
 
-	app.Run(cfg, logger)
+	app.Run(cfg, log)
 }
 
-func createLogger(cfg *config.Config) (logger *zap.Logger, err error) {
+func createLogger(cfg config.Config) (log *zap.Logger, err error) {
 	if cfg.Development {
-		logger, err = zap.NewDevelopment()
+		log, err = zap.NewDevelopment()
 	} else {
-		logger, err = zap.NewProduction()
+		log, err = zap.NewProduction()
 	}
 	return
 }

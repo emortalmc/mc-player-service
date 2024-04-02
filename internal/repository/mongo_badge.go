@@ -6,22 +6,21 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"mc-player-service/internal/repository/model"
 	"time"
 )
 
-func (m *mongoRepository) GetPlayerBadges(ctx context.Context, playerId uuid.UUID) ([]string, error) {
+func (m *mongoRepository) GetBadgePlayer(ctx context.Context, playerId uuid.UUID) (model.BadgePlayer, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	result := struct {
-		Badges []string `bson:"badges"`
-	}{}
-	opts := options.FindOne().SetProjection(bson.M{"badges": 1})
-	if err := m.playerCollection.FindOne(ctx, bson.M{"_id": playerId}, opts).Decode(&result); err != nil {
-		return nil, err
+	var player model.BadgePlayer
+	if err := m.playerCollection.FindOne(ctx, bson.M{"_id": playerId}, options.FindOne().SetProjection(model.BadgePlayerProjection)).
+		Decode(&player); err != nil {
+		return model.BadgePlayer{}, err
 	}
 
-	return result.Badges, nil
+	return player, nil
 }
 
 func (m *mongoRepository) UpdatePlayerBadgesAndActive(ctx context.Context, playerId uuid.UUID, badges []string,
@@ -30,7 +29,7 @@ func (m *mongoRepository) UpdatePlayerBadgesAndActive(ctx context.Context, playe
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	update := bson.M{"$set": bson.M{"badges": badges}}
+	update := bson.M{"$set": bson.M{"badge": badges}}
 	if activeBadge != nil {
 		update["$set"].(bson.M)["activeBadge"] = activeBadge
 	} else {
@@ -50,7 +49,7 @@ func (m *mongoRepository) AddPlayerBadge(ctx context.Context, playerId uuid.UUID
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	result, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": playerId}, bson.M{"$addToSet": bson.M{"badges": badgeId}})
+	result, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": playerId}, bson.M{"$addToSet": bson.M{"badge": badgeId}})
 	if err != nil {
 		return 0, err
 	}
@@ -62,7 +61,7 @@ func (m *mongoRepository) RemovePlayerBadge(ctx context.Context, playerId uuid.U
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	result, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": playerId}, bson.M{"$pull": bson.M{"badges": badgeId}})
+	result, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": playerId}, bson.M{"$pull": bson.M{"badge": badgeId}})
 	if err != nil {
 		return 0, err
 	}

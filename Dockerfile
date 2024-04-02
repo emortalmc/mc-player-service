@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 \
     GOOS=$TARGETOS \
     GOARCH=$TARGETARCH \
-    go build -ldflags="-s -w" -o mc-player-service ./cmd
+    go build -ldflags="-s -w" -o mc-player-service ./cmd/mc-player-service
 
 FROM alpine
 

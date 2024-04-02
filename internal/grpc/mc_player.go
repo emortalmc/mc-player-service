@@ -1,4 +1,4 @@
-package service
+package grpc
 
 import (
 	"context"
@@ -19,22 +19,22 @@ import (
 type mcPlayerService struct {
 	pb.McPlayerServer
 
-	repo repository.Repository
+	repo repository.PlayerReader
 }
 
-func newMcPlayerService(repo repository.Repository) pb.McPlayerServer {
+func newMcPlayerService(repo repository.PlayerReader) pb.McPlayerServer {
 	return &mcPlayerService{
 		repo: repo,
 	}
 }
 
 func (s *mcPlayerService) GetPlayer(ctx context.Context, req *pb.GetPlayerRequest) (*pb.GetPlayerResponse, error) {
-	pId, err := uuid.Parse(req.PlayerId)
+	pID, err := uuid.Parse(req.PlayerId)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid player id %s", req.PlayerId))
 	}
 
-	mcPlayer, err := s.getOrCreateMcPlayer(ctx, pId)
+	mcPlayer, err := s.getOrCreateMcPlayer(ctx, pID)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +47,11 @@ func (s *mcPlayerService) GetPlayer(ctx context.Context, req *pb.GetPlayerReques
 func (s *mcPlayerService) GetPlayers(ctx context.Context, req *pb.GetPlayersRequest) (*pb.GetPlayersResponse, error) {
 	var ids []uuid.UUID
 	for _, id := range req.PlayerIds {
-		pId, err := uuid.Parse(id)
+		pID, err := uuid.Parse(id)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid player id %s", id))
 		}
-		ids = append(ids, pId)
+		ids = append(ids, pID)
 	}
 
 	players, err := s.repo.GetPlayers(ctx, ids)
@@ -106,20 +106,20 @@ func (s *mcPlayerService) SearchPlayersByUsername(ctx context.Context, req *pb.S
 		req.Pageable.Size = utils.PointerOf(uint64(20))
 	}
 
-	var excludedPlayerIds []uuid.UUID
+	var excludedPlayerIDs []uuid.UUID
 	if req.ExcludedPlayerIds != nil {
-		excludedPlayerIds = make([]uuid.UUID, 0, len(req.ExcludedPlayerIds))
+		excludedPlayerIDs = make([]uuid.UUID, 0, len(req.ExcludedPlayerIds))
 
 		for _, id := range req.ExcludedPlayerIds {
 			pId, err := uuid.Parse(id)
 			if err != nil {
 				return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid player id %s", id))
 			}
-			excludedPlayerIds = append(excludedPlayerIds, pId)
+			excludedPlayerIDs = append(excludedPlayerIDs, pId)
 		}
 	}
 
-	players, pageData, err := s.repo.SearchPlayersByUsername(ctx, req.SearchUsername, req.Pageable, filter, excludedPlayerIds)
+	players, pageData, err := s.repo.SearchPlayersByUsername(ctx, req.SearchUsername, req.Pageable, filter, excludedPlayerIDs)
 	if err != nil {
 		return nil, fmt.Errorf("error searching for players: %w", err)
 	}
@@ -189,13 +189,13 @@ func (s *mcPlayerService) getOrCreateMcPlayer(ctx context.Context, pId uuid.UUID
 	return s.createMcPlayerFromPlayer(ctx, p)
 }
 
-func (s *mcPlayerService) createMcPlayerFromPlayer(ctx context.Context, p *model.Player) (*mcplayer.McPlayer, error) {
-	var session *model.LoginSession
+func (s *mcPlayerService) createMcPlayerFromPlayer(ctx context.Context, p model.Player) (*mcplayer.McPlayer, error) {
+	var session model.LoginSession
 	if p.CurrentServer != nil {
 		var err error
-		session, err = s.repo.GetCurrentLoginSession(ctx, p.Id)
+		session, err = s.repo.GetCurrentLoginSession(ctx, p.ID)
 		if err != nil {
-			return nil, fmt.Errorf("error getting current login session (id: %s): %w", p.Id, err)
+			return nil, fmt.Errorf("error getting current login session (id: %s): %w", p.ID, err)
 		}
 	}
 

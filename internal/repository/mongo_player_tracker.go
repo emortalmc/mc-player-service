@@ -10,17 +10,17 @@ import (
 	"time"
 )
 
-func (m *mongoRepository) GetPlayerServers(ctx context.Context, playerId []uuid.UUID) (map[uuid.UUID]*model.CurrentServer, error) {
+func (m *mongoRepository) GetPlayerServers(ctx context.Context, playerID []uuid.UUID) (map[uuid.UUID]model.CurrentServer, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	type result struct {
-		Id            uuid.UUID            `bson:"_id"`
-		CurrentServer *model.CurrentServer `bson:"currentServer,omitempty"`
+		ID            uuid.UUID            `bson:"_id"`
+		CurrentServer model.CurrentServer `bson:"currentServer,omitempty"`
 	}
 	var mongoResults []result
 
-	cursor, err := m.playerCollection.Find(ctx, bson.M{"_id": bson.M{"$in": playerId}},
+	cursor, err := m.playerCollection.Find(ctx, bson.M{"_id": bson.M{"$in": playerID}},
 		options.Find().SetProjection(bson.M{"currentServer": 1}))
 	if err != nil {
 		return nil, err
@@ -30,15 +30,15 @@ func (m *mongoRepository) GetPlayerServers(ctx context.Context, playerId []uuid.
 		return nil, err
 	}
 
-	resultMap := make(map[uuid.UUID]*model.CurrentServer)
+	resultMap := make(map[uuid.UUID]model.CurrentServer)
 	for _, r := range mongoResults {
-		resultMap[r.Id] = r.CurrentServer
+		resultMap[r.ID] = r.CurrentServer
 	}
 
 	return resultMap, nil
 }
 
-func (m *mongoRepository) GetServerPlayers(ctx context.Context, serverId string) ([]*model.OnlinePlayer, error) {
+func (m *mongoRepository) GetServerPlayers(ctx context.Context, serverId string) ([]model.OnlinePlayer, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -48,7 +48,7 @@ func (m *mongoRepository) GetServerPlayers(ctx context.Context, serverId string)
 		return nil, err
 	}
 
-	var mongoResults []*model.OnlinePlayer
+	var mongoResults []model.OnlinePlayer
 	err = cursor.All(ctx, &mongoResults)
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (m *mongoRepository) GetPlayerCount(ctx context.Context, serverId *string, 
 	return m.playerCollection.CountDocuments(ctx, query)
 }
 
-func (m *mongoRepository) GetOnlinePlayers(ctx context.Context, serverId *string, fleetNames []string) ([]*model.OnlinePlayer, error) {
+func (m *mongoRepository) GetOnlinePlayers(ctx context.Context, serverId *string, fleetNames []string) ([]model.OnlinePlayer, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -76,7 +76,7 @@ func (m *mongoRepository) GetOnlinePlayers(ctx context.Context, serverId *string
 		return nil, fmt.Errorf("failed to find online players: %w", err)
 	}
 
-	var mongoResults []*model.OnlinePlayer
+	var mongoResults []model.OnlinePlayer
 	if err := cursor.All(ctx, &mongoResults); err != nil {
 		return nil, fmt.Errorf("failed to decode online players: %w", err)
 	}

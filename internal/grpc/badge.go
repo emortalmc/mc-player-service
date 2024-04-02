@@ -1,14 +1,15 @@
-package service
+package grpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	pb "github.com/emortalmc/proto-specs/gen/go/grpc/badge"
 	pbmodel "github.com/emortalmc/proto-specs/gen/go/model/badge"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	badgeh "mc-player-service/internal/badge"
+	"mc-player-service/internal/app/badge"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/repository"
 )
@@ -16,15 +17,15 @@ import (
 type badgeService struct {
 	pb.BadgeManagerServer
 
-	repo     repository.Repository
-	badgeH   badgeh.Handler
-	badgeCfg *config.BadgeConfig
+	repo     repository.BadgeReader
+	badgeSvc badge.Service
+	badgeCfg config.BadgeConfig
 }
 
-func newBadgeService(repo repository.Repository, badgeH badgeh.Handler, badgeCfg *config.BadgeConfig) pb.BadgeManagerServer {
+func newBadgeService(repo repository.Repository, badgeSvc badge.Service, badgeCfg config.BadgeConfig) pb.BadgeManagerServer {
 	return &badgeService{
 		repo:     repo,
-		badgeH:   badgeH,
+		badgeSvc: badgeSvc,
 		badgeCfg: badgeCfg,
 	}
 }
@@ -38,22 +39,15 @@ func (s *badgeService) SetActivePlayerBadge(ctx context.Context, request *pb.Set
 		return nil, status.Error(codes.InvalidArgument, "invalid player_id")
 	}
 
-	badgeIds, err := s.repo.GetPlayerBadges(ctx, playerId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get player badges: %w", err)
-	}
-
-	for _, badgeId := range badgeIds {
-		if badgeId == request.BadgeId {
-			if err := s.repo.SetActivePlayerBadge(ctx, playerId, &request.BadgeId); err != nil {
-				return nil, status.Error(codes.Internal, "failed to set active badge")
-			}
-
-			return &pb.SetActivePlayerBadgeResponse{}, nil
+	if err := s.badgeSvc.SetActiveBadge(ctx, playerId, request.BadgeId); err != nil {
+		if errors.Is(err, badge.DoesntHaveBadgeErr) {
+			return nil, setActivePlayerBadgeDoesntHaveBadgeErr
+		} else {
+			return nil, status.Error(codes.Internal, "failed to set active badge")
 		}
 	}
 
-	return nil, setActivePlayerBadgeDoesntHaveBadgeErr
+	return &pb.SetActivePlayerBadgeResponse{}, nil
 }
 
 var removeBadgeFromPlayerDoesntHaveBadgeErr = panicIfErr(status.New(codes.NotFound, "player does not have this badge").
@@ -65,9 +59,9 @@ func (s *badgeService) RemoveBadgeFromPlayer(ctx context.Context, request *pb.Re
 		return nil, status.Error(codes.InvalidArgument, "invalid player_id")
 	}
 
-	err = s.badgeH.RemoveBadgeFromPlayer(ctx, playerId, request.BadgeId)
+	err = s.badgeSvc.RemoveBadgeFromPlayer(ctx, playerId, request.BadgeId)
 	if err != nil {
-		if err == badgeh.DoesntHaveBadgeErr {
+		if errors.Is(err, badge.DoesntHaveBadgeErr) {
 			return nil, removeBadgeFromPlayerDoesntHaveBadgeErr
 		} else {
 			return nil, status.Error(codes.Internal, "failed to remove badge from player")
@@ -88,7 +82,7 @@ func (s *badgeService) GetActivePlayerBadge(ctx context.Context, request *pb.Get
 		return nil, fmt.Errorf("failed to get active player badge: %w", err)
 	}
 	if badgeId == nil {
-		return nil, status.Error(codes.NotFound, "player does not have any badges")
+		return nil, status.Error(codes.NotFound, "player does not have any badge")
 	}
 
 	badge, ok := s.badgeCfg.Badges[*badgeId]
@@ -100,25 +94,26 @@ func (s *badgeService) GetActivePlayerBadge(ctx context.Context, request *pb.Get
 		Badge: badge.ToProto(),
 	}, nil
 }
+
 func (s *badgeService) GetPlayerBadges(ctx context.Context, request *pb.GetPlayerBadgesRequest) (*pb.GetPlayerBadgesResponse, error) {
 	playerId, err := uuid.Parse(request.PlayerId)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid player_id")
 	}
 
-	player, err := s.repo.GetPlayer(ctx, playerId)
+	player, err := s.repo.GetBadgePlayer(ctx, playerId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get player: %w", err)
 	}
 
-	badges := make([]*pbmodel.Badge, len(player.Badges))
-	for i, badgeId := range player.Badges {
-		badge, ok := s.badgeCfg.Badges[badgeId]
+	badges := make([]*pbmodel.Badge, len(player.BadgeIDs))
+	for i, badgeId := range player.BadgeIDs {
+		b, ok := s.badgeCfg.Badges[badgeId]
 		if !ok {
 			return nil, fmt.Errorf("failed to resolve badgeId to config")
 		}
 
-		badges[i] = badge.ToProto()
+		badges[i] = b.ToProto()
 	}
 
 	return &pb.GetPlayerBadgesResponse{
@@ -136,11 +131,11 @@ func (s *badgeService) AddBadgeToPlayer(ctx context.Context, request *pb.AddBadg
 		return nil, status.Error(codes.InvalidArgument, "invalid player_id")
 	}
 
-	err = s.badgeH.AddBadgeToPlayer(ctx, playerId, request.BadgeId)
+	err = s.badgeSvc.AddBadgeToPlayer(ctx, playerId, request.BadgeId)
 	if err != nil {
-		if err == badgeh.AlreadyHasBadgeErr {
+		if errors.Is(err, badge.AlreadyHasBadgeErr) {
 			return nil, addBadgeToPlayerAlreadyHasBadgeErr
-		} else if err == badgeh.DoesntExistErr {
+		} else if errors.Is(err, badge.DoesntExistErr) {
 			return nil, status.Error(codes.InvalidArgument, "badge does not exist")
 		} else {
 			return nil, status.Error(codes.Internal, "failed to add badge to player")

@@ -1,9 +1,9 @@
-package service
+package grpc
 
 import (
 	"context"
 	"fmt"
-	"github.com/emortalmc/proto-specs/gen/go/grpc/badge"
+	badgeProto "github.com/emortalmc/proto-specs/gen/go/grpc/badge"
 	"github.com/emortalmc/proto-specs/gen/go/grpc/mcplayer"
 	grpczap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"go.uber.org/zap"
@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
-	badgeh "mc-player-service/internal/badge"
+	"mc-player-service/internal/app/badge"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/healthprovider"
 	"mc-player-service/internal/repository"
@@ -20,16 +20,16 @@ import (
 	"sync"
 )
 
-func RunServices(ctx context.Context, logger *zap.SugaredLogger, wg *sync.WaitGroup, cfg *config.Config,
-	badgeH badgeh.Handler, badgeCfg *config.BadgeConfig, repo repository.Repository) {
+func RunServices(ctx context.Context, log *zap.SugaredLogger, wg *sync.WaitGroup, cfg config.Config,
+	badgeSvc badge.Service, badgeCfg config.BadgeConfig, repo repository.Repository) {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
-		logger.Fatalw("failed to listen", err)
+		log.Fatalw("failed to listen", err)
 	}
 
 	s := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		grpczap.UnaryServerInterceptor(logger.Desugar(), grpczap.WithLevels(func(code codes.Code) zapcore.Level {
+		grpczap.UnaryServerInterceptor(log.Desugar(), grpczap.WithLevels(func(code codes.Code) zapcore.Level {
 			if code != codes.Internal && code != codes.Unavailable && code != codes.Unknown {
 				return zapcore.DebugLevel
 			} else {
@@ -46,13 +46,13 @@ func RunServices(ctx context.Context, logger *zap.SugaredLogger, wg *sync.WaitGr
 
 	grpc_health_v1.RegisterHealthServer(s, healthSrv)
 	mcplayer.RegisterMcPlayerServer(s, newMcPlayerService(repo))
-	badge.RegisterBadgeManagerServer(s, newBadgeService(repo, badgeH, badgeCfg))
+	badgeProto.RegisterBadgeManagerServer(s, newBadgeService(repo, badgeSvc, badgeCfg))
 	mcplayer.RegisterPlayerTrackerServer(s, newPlayerTrackerService(repo))
-	logger.Infow("listening for gRPC requests", "port", cfg.Port)
+	log.Infow("listening for gRPC requests", "port", cfg.Port)
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			logger.Fatalw("failed to serve", err)
+			log.Fatalw("failed to serve", err)
 		}
 	}()
 

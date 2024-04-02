@@ -11,9 +11,9 @@ import (
 )
 
 type Player struct {
-	Id              uuid.UUID   `bson:"_id"`
-	CurrentUsername string      `bson:"currentUsername"`
-	CurrentSkin     *PlayerSkin `bson:"currentSkin,omitempty"` // Only null as it didn't use to be stored
+	ID              uuid.UUID  `bson:"_id"`
+	CurrentUsername string     `bson:"currentUsername"`
+	CurrentSkin     PlayerSkin `bson:"currentSkin,omitempty"` // Only null as it didn't use to be stored
 
 	FirstLogin time.Time `bson:"firstLogin"`
 
@@ -30,9 +30,13 @@ type Player struct {
 	CurrentServer *CurrentServer `bson:"currentServer,omitempty"`
 }
 
-func (p *Player) ToProto(session *LoginSession) *mcplayer.McPlayer {
+func (p Player) IsEmpty() bool {
+	return p.ID == uuid.Nil
+}
+
+func (p Player) ToProto(session LoginSession) *mcplayer.McPlayer {
 	return &mcplayer.McPlayer{
-		Id:               p.Id.String(),
+		Id:               p.ID.String(),
 		CurrentUsername:  p.CurrentUsername,
 		FirstLogin:       timestamppb.New(p.FirstLogin),
 		LastOnline:       timestamppb.New(p.LastOnline),
@@ -53,34 +57,54 @@ var OnlinePlayerProjection = map[string]interface{}{
 // OnlinePlayer a partial player object that is used
 // by the PlayerTracker to track online players
 type OnlinePlayer struct {
-	Id              uuid.UUID `bson:"_id"`
+	ID              uuid.UUID `bson:"_id"`
 	CurrentUsername string    `bson:"currentUsername"`
 
 	CurrentServer *CurrentServer `bson:"currentServer,omitempty"`
 }
 
-func (p *OnlinePlayer) ToProto() *mcplayer.OnlinePlayer {
+func (p OnlinePlayer) ToProto() *mcplayer.OnlinePlayer {
 	return &mcplayer.OnlinePlayer{
-		PlayerId: p.Id.String(),
+		PlayerId: p.ID.String(),
 		Username: p.CurrentUsername,
 		Server:   p.CurrentServer.ToProto(),
 	}
 }
 
+var BadgePlayerProjection = map[string]interface{}{
+	"_id":         1,
+	"badges":      1,
+	"activeBadge": 1,
+}
+
+type BadgePlayer struct {
+	ID uuid.UUID `bson:"_id"`
+
+	// BadgeIDs IDs of the badge the player has
+	BadgeIDs []string `bson:"badges,omitempty"`
+
+	// ActiveBadge ID of the badge the player has currently active (nil if none)
+	ActiveBadge *string `bson:"activeBadge,omitempty"`
+}
+
 type CurrentServer struct {
-	ServerId  string `bson:"serverId"`
-	ProxyId   string `bson:"proxyId"`
+	ServerID  string `bson:"serverId"`
+	ProxyID   string `bson:"proxyId"`
 	FleetName string `bson:"fleetName"`
 }
 
-func (s *CurrentServer) ToProto() *mcplayer.CurrentServer {
-	if s == nil {
+func (s CurrentServer) IsEmpty() bool {
+	return s.ServerID == "" && s.ProxyID == "" && s.FleetName == ""
+}
+
+func (s CurrentServer) ToProto() *mcplayer.CurrentServer {
+	if s.IsEmpty() {
 		return nil
 	}
 
 	return &mcplayer.CurrentServer{
-		ServerId: s.ServerId,
-		ProxyId:  s.ProxyId,
+		ServerId:  s.ServerID,
+		ProxyId:   s.ProxyID,
 		FleetName: s.FleetName,
 	}
 }
@@ -90,19 +114,23 @@ type PlayerSkin struct {
 	Signature string `bson:"signature"`
 }
 
-func PlayerSkinFromProto(s *commonmodel.PlayerSkin) *PlayerSkin {
+func (s PlayerSkin) IsEmpty() bool {
+	return s.Texture == ""
+}
+
+func PlayerSkinFromProto(s *commonmodel.PlayerSkin) PlayerSkin {
 	if s == nil {
-		return nil
+		return PlayerSkin{}
 	}
 
-	return &PlayerSkin{
+	return PlayerSkin{
 		Texture:   s.Texture,
 		Signature: s.Signature,
 	}
 }
 
-func (s *PlayerSkin) ToProto() *commonmodel.PlayerSkin {
-	if s == nil {
+func (s PlayerSkin) ToProto() *commonmodel.PlayerSkin {
+	if s.IsEmpty() {
 		return nil
 	}
 
@@ -113,28 +141,32 @@ func (s *PlayerSkin) ToProto() *commonmodel.PlayerSkin {
 }
 
 type LoginSession struct {
-	Id       primitive.ObjectID `bson:"_id"`
-	PlayerId uuid.UUID          `bson:"playerId"`
+	ID       primitive.ObjectID `bson:"_id"`
+	PlayerID uuid.UUID          `bson:"playerId"`
 
 	LogoutTime *time.Time `bson:"logoutTime,omitempty"`
 }
 
-func (s *LoginSession) GetDuration() time.Duration {
-	if s.LogoutTime == nil {
-		return time.Since(s.Id.Timestamp())
-	}
-
-	return s.LogoutTime.Sub(s.Id.Timestamp())
+func (s LoginSession) IsEmpty() bool {
+	return s.ID == primitive.NilObjectID
 }
 
-func (s *LoginSession) ToProto() *mcplayer.LoginSession {
-	if s == nil {
+func (s LoginSession) GetDuration() time.Duration {
+	if s.LogoutTime == nil {
+		return time.Since(s.ID.Timestamp())
+	}
+
+	return s.LogoutTime.Sub(s.ID.Timestamp())
+}
+
+func (s LoginSession) ToProto() *mcplayer.LoginSession {
+	if s.IsEmpty() {
 		return nil
 	}
 
 	proto := &mcplayer.LoginSession{
-		SessionId: s.Id.String(),
-		LoginTime: timestamppb.New(s.Id.Timestamp()),
+		SessionId: s.ID.String(),
+		LoginTime: timestamppb.New(s.ID.Timestamp()),
 	}
 
 	if s.LogoutTime != nil {
@@ -145,7 +177,7 @@ func (s *LoginSession) ToProto() *mcplayer.LoginSession {
 }
 
 type PlayerUsername struct {
-	Id       primitive.ObjectID `bson:"_id"`
-	PlayerId uuid.UUID          `bson:"playerId"`
+	ID       primitive.ObjectID `bson:"_id"`
+	PlayerID uuid.UUID          `bson:"playerId"`
 	Username string             `bson:"username"`
 }

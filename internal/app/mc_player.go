@@ -3,45 +3,47 @@ package app
 import (
 	"context"
 	"go.uber.org/zap"
-	"mc-player-service/internal/badge"
+	"mc-player-service/internal/app/badge"
+	"mc-player-service/internal/app/player"
 	"mc-player-service/internal/config"
+	"mc-player-service/internal/grpc"
 	"mc-player-service/internal/kafka"
 	"mc-player-service/internal/repository"
-	"mc-player-service/internal/service"
 	"os/signal"
 	"sync"
 	"syscall"
 )
 
-func Run(cfg *config.Config, logger *zap.SugaredLogger) {
+func Run(cfg config.Config, log *zap.SugaredLogger) {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 	wg := &sync.WaitGroup{}
 
 	badgeCfg, err := config.LoadBadgeConfig()
 	if err != nil {
-		logger.Fatalw("failed to load badge config", err)
+		log.Fatalw("failed to load badge config", err)
 	}
-	logger.Infow("loaded badge config", "badgeCount", len(badgeCfg.Badges))
+	log.Infow("loaded badge config", "badgeCount", len(badgeCfg.Badges))
 
 	repoWg := &sync.WaitGroup{}
 	repoCtx, repoCancel := context.WithCancel(ctx)
 
-	repo, err := repository.NewMongoRepository(repoCtx, logger, repoWg, cfg.MongoDB)
+	repo, err := repository.NewMongoRepository(repoCtx, log, repoWg, cfg.MongoDB)
 	if err != nil {
-		logger.Fatalw("failed to create repository", err)
+		log.Fatalw("failed to create repository", err)
 	}
 
-	badgeHandler := badge.NewBadgeHandler(logger, repo, badgeCfg)
+	badgeSvc := badge.NewService(log, repo, repo, badgeCfg)
+	playerSvc := player.NewService(log, repo, cfg)
 
-	kafka.NewConsumer(ctx, wg, cfg, logger, repo, badgeHandler, badgeCfg)
+	kafka.NewConsumer(ctx, wg, cfg, log, repo, badgeSvc, playerSvc)
 
-	service.RunServices(ctx, logger, wg, cfg, badgeHandler, badgeCfg, repo)
+	grpc.RunServices(ctx, log, wg, cfg, badgeSvc, badgeCfg, repo)
 
 	wg.Wait()
-	logger.Info("shutting down")
+	log.Info("shutting down")
 
-	logger.Info("shutting down repository")
+	log.Info("shutting down repository")
 	repoCancel()
 	repoWg.Wait()
 }

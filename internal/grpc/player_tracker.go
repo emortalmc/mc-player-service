@@ -1,4 +1,4 @@
-package service
+package grpc
 
 import (
 	"context"
@@ -13,10 +13,10 @@ import (
 type playerTrackerService struct {
 	pb.UnimplementedPlayerTrackerServer
 
-	repo repository.Repository
+	repo repository.PlayerReader
 }
 
-func newPlayerTrackerService(repo repository.Repository) pb.PlayerTrackerServer {
+func newPlayerTrackerService(repo repository.PlayerReader) pb.PlayerTrackerServer {
 	return &playerTrackerService{
 		repo: repo,
 	}
