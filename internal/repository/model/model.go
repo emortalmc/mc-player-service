@@ -27,15 +27,11 @@ type Player struct {
 	// ActiveBadge ID of the badge the player has currently active (nil if none)
 	ActiveBadge *string `bson:"activeBadge,omitempty"`
 
-	CurrentServer CurrentServer `bson:"currentServer,omitempty"`
+	CurrentServer *CurrentServer `bson:"currentServer,omitempty"`
 }
 
 func (p Player) IsEmpty() bool {
 	return p.ID == uuid.Nil
-}
-
-func (p Player) HasCurrentServer() bool {
-	return !p.CurrentServer.IsEmpty()
 }
 
 func (p Player) ToProto(session LoginSession) *mcplayer.McPlayer {
@@ -44,7 +40,7 @@ func (p Player) ToProto(session LoginSession) *mcplayer.McPlayer {
 		CurrentUsername:  p.CurrentUsername,
 		FirstLogin:       timestamppb.New(p.FirstLogin),
 		LastOnline:       timestamppb.New(p.LastOnline),
-		CurrentlyOnline:  p.HasCurrentServer(),
+		CurrentlyOnline:  p.CurrentServer != nil,
 		CurrentSession:   session.ToProto(),
 		HistoricPlayTime: durationpb.New(p.TotalPlaytime),
 		CurrentServer:    p.CurrentServer.ToProto(),
@@ -97,12 +93,8 @@ type CurrentServer struct {
 	FleetName string `bson:"fleetName"`
 }
 
-func (s CurrentServer) IsEmpty() bool {
-	return s.ServerID == "" && s.ProxyID == "" && s.FleetName == ""
-}
-
-func (s CurrentServer) ToProto() *mcplayer.CurrentServer {
-	if s.IsEmpty() {
+func (s *CurrentServer) ToProto() *mcplayer.CurrentServer {
+	if s == nil {
 		return nil
 	}
 

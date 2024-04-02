@@ -10,7 +10,7 @@ import (
 )
 
 func (s *serviceImpl) HandlePlayerConnect(ctx context.Context, time time.Time, playerID uuid.UUID, playerUsername string,
-	proxyID string,	playerSkin model.PlayerSkin, player model.Player) {
+	proxyID string, playerSkin model.PlayerSkin, player model.Player) {
 
 	session := model.LoginSession{
 		ID:       primitive.NewObjectIDFromTimestamp(time),
@@ -21,7 +21,7 @@ func (s *serviceImpl) HandlePlayerConnect(ctx context.Context, time time.Time, p
 		s.log.Errorw("error creating login session", "error", err)
 	}
 
-	server := model.CurrentServer{ProxyID: proxyID}
+	server := &model.CurrentServer{ProxyID: proxyID}
 	updatedUsername := false
 
 	if player.IsEmpty() {
@@ -93,21 +93,6 @@ func (s *serviceImpl) HandlePlayerDisconnect(ctx context.Context, time time.Time
 	}
 
 	s.webhook.SendPlayerLeaveWebhook(playerUsername, playerID.String(), count)
-
-	p, err := s.repo.GetPlayer(ctx, playerID)
-	if err != nil {
-		s.log.Errorw("error getting player", "error", err)
-		return
-	}
-
-	p.CurrentServer = model.CurrentServer{}
-	p.TotalPlaytime += session.GetDuration()
-	p.LastOnline = time
-
-	if err := s.repo.SavePlayer(ctx, p, false); err != nil {
-		s.log.Errorw("error saving player", "error", err)
-		return
-	}
 }
 
 func (s *serviceImpl) HandlePlayerServerSwitch(ctx context.Context, pID uuid.UUID, newServerID string) {

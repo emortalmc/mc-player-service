@@ -191,7 +191,7 @@ func (s *mcPlayerService) getOrCreateMcPlayer(ctx context.Context, pId uuid.UUID
 
 func (s *mcPlayerService) createMcPlayerFromPlayer(ctx context.Context, p model.Player) (*mcplayer.McPlayer, error) {
 	var session model.LoginSession
-	if p.HasCurrentServer() {
+	if p.CurrentServer != nil {
 		var err error
 		session, err = s.repo.GetCurrentLoginSession(ctx, p.ID)
 		if err != nil {
