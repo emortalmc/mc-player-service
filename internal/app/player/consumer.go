@@ -21,7 +21,7 @@ func (s *serviceImpl) HandlePlayerConnect(ctx context.Context, time time.Time, p
 		s.log.Errorw("error creating login session", "error", err)
 	}
 
-	server := &model.CurrentServer{ProxyID: proxyID}
+	server := model.CurrentServer{ProxyID: proxyID}
 	updatedUsername := false
 
 	if player.IsEmpty() {
@@ -100,7 +100,7 @@ func (s *serviceImpl) HandlePlayerDisconnect(ctx context.Context, time time.Time
 		return
 	}
 
-	p.CurrentServer = nil
+	p.CurrentServer = model.CurrentServer{}
 	p.TotalPlaytime += session.GetDuration()
 	p.LastOnline = time
 
