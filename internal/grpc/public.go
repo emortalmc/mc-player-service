@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 	"mc-player-service/internal/app/badge"
+	"mc-player-service/internal/app/player"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/healthprovider"
 	"mc-player-service/internal/repository"
@@ -21,7 +22,7 @@ import (
 )
 
 func RunServices(ctx context.Context, log *zap.SugaredLogger, wg *sync.WaitGroup, cfg config.Config,
-	badgeSvc badge.Service, badgeCfg config.BadgeConfig, repo repository.Repository) {
+	badgeSvc badge.Service, badgeCfg config.BadgeConfig, playerSvc player.Service, repo repository.Repository) {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
@@ -45,7 +46,7 @@ func RunServices(ctx context.Context, log *zap.SugaredLogger, wg *sync.WaitGroup
 	healthSrv := healthprovider.Create(ctx, repo)
 
 	grpc_health_v1.RegisterHealthServer(s, healthSrv)
-	mcplayer.RegisterMcPlayerServer(s, newMcPlayerService(repo))
+	mcplayer.RegisterMcPlayerServer(s, newMcPlayerService(repo, playerSvc))
 	badgeProto.RegisterBadgeManagerServer(s, newBadgeService(repo, badgeSvc, badgeCfg))
 	mcplayer.RegisterPlayerTrackerServer(s, newPlayerTrackerService(repo))
 	log.Infow("listening for gRPC requests", "port", cfg.Port)

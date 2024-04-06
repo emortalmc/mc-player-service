@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"mc-player-service/internal/app/player"
 	"mc-player-service/internal/repository"
 	"mc-player-service/internal/repository/model"
 	"mc-player-service/internal/utils"
@@ -20,11 +21,13 @@ type mcPlayerService struct {
 	pb.McPlayerServer
 
 	repo repository.PlayerReader
+	svc  player.Service
 }
 
-func newMcPlayerService(repo repository.PlayerReader) pb.McPlayerServer {
+func newMcPlayerService(repo repository.PlayerReader, svc player.Service) pb.McPlayerServer {
 	return &mcPlayerService{
 		repo: repo,
+		svc:  svc,
 	}
 }
 
@@ -175,6 +178,38 @@ func (s *mcPlayerService) GetStatTotalPlaytime(ctx context.Context, _ *pb.GetSta
 	}
 
 	return &pb.GetStatTotalPlaytimeResponse{PlaytimeHours: count}, nil
+}
+
+func (s *mcPlayerService) AddExperienceToPlayers(ctx context.Context, req *pb.AddExperienceToPlayersRequest) (*pb.AddExperienceToPlayersResponse, error) {
+	ids := make([]uuid.UUID, len(req.PlayerIds))
+	for i, id := range req.PlayerIds {
+		pId, err := uuid.Parse(id)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid player id %s", id))
+		}
+
+		ids[i] = pId
+	}
+
+	newXPs := make(map[string]uint64, len(ids))
+
+	for _, id := range ids {
+		newXP, err := s.svc.AddExperienceByID(ctx, id, req.Reason, int(req.Experience));
+
+		if err != nil {
+			return nil, fmt.Errorf("error adding experience to player %s: %w", id.String(), err)
+		}
+
+		newXPs[id.String()] = uint64(newXP)
+	}
+
+	return &pb.AddExperienceToPlayersResponse{
+		Experience: newXPs,
+	}, nil
+}
+
+func (s *mcPlayerService) GetPlayerExperience(ctx context.Context, req *pb.GetPlayerExperienceRequest) (*pb.GetPlayerExperienceResponse, error) {
+	panic("implement me")
 }
 
 func (s *mcPlayerService) getOrCreateMcPlayer(ctx context.Context, pId uuid.UUID) (*mcplayer.McPlayer, error) {

@@ -48,10 +48,10 @@ type PlayerReader interface {
 	// 1. the given server if present
 	// 2. the given fleets if present
 	// 3. globally if neither are present
-	GetPlayerCount(ctx context.Context, serverId *string, fleetNames []string) (int64, error)
+	GetPlayerCount(ctx context.Context, serverID *string, fleetNames []string) (int64, error)
 
 	// GetOnlinePlayers functions the same as GetPlayerCount
-	GetOnlinePlayers(ctx context.Context, serverId *string, fleetNames []string) ([]model.OnlinePlayer, error)
+	GetOnlinePlayers(ctx context.Context, serverID *string, fleetNames []string) ([]model.OnlinePlayer, error)
 
 	GetFleetPlayerCounts(ctx context.Context, fleetNames []string) (map[string]int64, error)
 
@@ -61,11 +61,14 @@ type PlayerReader interface {
 
 type PlayerWriter interface {
 	SavePlayer(ctx context.Context, player model.Player, upsert bool) error
-	PlayerLogout(ctx context.Context, playerId uuid.UUID, lastOnline time.Time, addedPlaytime time.Duration) error
+	PlayerLogout(ctx context.Context, playerID uuid.UUID, lastOnline time.Time, addedPlaytime time.Duration) error
 
 	CreateLoginSession(ctx context.Context, session model.LoginSession) error
-	SetLoginSessionLogoutTime(ctx context.Context, playerId uuid.UUID, logoutTime time.Time) error
+	SetLoginSessionLogoutTime(ctx context.Context, playerID uuid.UUID, logoutTime time.Time) error
 	CreatePlayerUsername(ctx context.Context, username model.PlayerUsername) error
+
+	AddExperienceToPlayer(ctx context.Context, playerID uuid.UUID, experience int) (int, error)
+	CreateExperienceTransaction(ctx context.Context, transaction model.ExperienceTransaction) error
 
 	SetPlayerServerAndFleet(ctx context.Context, playerId uuid.UUID, serverId string, fleet string) error
 }

@@ -6,8 +6,8 @@ import (
 )
 
 type Config struct {
-	Kafka   *KafkaConfig
-	MongoDB *MongoDBConfig
+	Kafka   KafkaConfig
+	MongoDB MongoDBConfig
 
 	Development bool
 

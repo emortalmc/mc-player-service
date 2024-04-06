@@ -7,7 +7,8 @@ import (
 	"mc-player-service/internal/app/player"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/grpc"
-	"mc-player-service/internal/kafka"
+	"mc-player-service/internal/kafka/consumer"
+	kafkaWriter "mc-player-service/internal/kafka/writer"
 	"mc-player-service/internal/repository"
 	"os/signal"
 	"sync"
@@ -33,12 +34,14 @@ func Run(cfg config.Config, log *zap.SugaredLogger) {
 		log.Fatalw("failed to create repository", err)
 	}
 
+	notifier := kafkaWriter.NewKafkaNotifier(ctx, wg, cfg.Kafka, log)
+
 	badgeSvc := badge.NewService(log, repo, repo, badgeCfg)
-	playerSvc := player.NewService(log, repo, cfg)
+	playerSvc := player.NewService(log, cfg, repo, notifier)
 
-	kafka.NewConsumer(ctx, wg, cfg, log, repo, badgeSvc, playerSvc)
+	kafkaConsumer.NewConsumer(ctx, wg, cfg, log, repo, badgeSvc, playerSvc)
 
-	grpc.RunServices(ctx, log, wg, cfg, badgeSvc, badgeCfg, repo)
+	grpc.RunServices(ctx, log, wg, cfg, badgeSvc, badgeCfg, playerSvc, repo)
 
 	wg.Wait()
 	log.Info("shutting down")
