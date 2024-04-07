@@ -17,20 +17,22 @@ import (
 const (
 	databaseName = "mc-player-service"
 
-	playerCollectionName   = "player"
-	sessionCollectionName  = "loginSession"
-	usernameCollectionName = "playerUsername"
+	playerCollectionName                = "player"
+	sessionCollectionName               = "loginSession"
+	usernameCollectionName              = "playerUsername"
+	experienceTransactionCollectionName = "experienceTransaction"
 )
 
 type mongoRepository struct {
 	database *mongo.Database
 
-	playerCollection   *mongo.Collection
-	sessionCollection  *mongo.Collection
-	usernameCollection *mongo.Collection
+	playerCollection                *mongo.Collection
+	sessionCollection               *mongo.Collection
+	usernameCollection              *mongo.Collection
+	experienceTransactionCollection *mongo.Collection
 }
 
-func NewMongoRepository(ctx context.Context, log *zap.SugaredLogger, wg *sync.WaitGroup, cfg *config.MongoDBConfig) (Repository, error) {
+func NewMongoRepository(ctx context.Context, log *zap.SugaredLogger, wg *sync.WaitGroup, cfg config.MongoDBConfig) (Repository, error) {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.URI).SetRegistry(createCodecRegistry()))
 	if err != nil {
 		return nil, err
@@ -38,10 +40,11 @@ func NewMongoRepository(ctx context.Context, log *zap.SugaredLogger, wg *sync.Wa
 
 	database := client.Database(databaseName)
 	repo := &mongoRepository{
-		database:           database,
-		playerCollection:   database.Collection(playerCollectionName),
-		sessionCollection:  database.Collection(sessionCollectionName),
-		usernameCollection: database.Collection(usernameCollectionName),
+		database:                        database,
+		playerCollection:                database.Collection(playerCollectionName),
+		sessionCollection:               database.Collection(sessionCollectionName),
+		usernameCollection:              database.Collection(usernameCollectionName),
+		experienceTransactionCollection: database.Collection(experienceTransactionCollectionName),
 	}
 
 	wg.Add(1)
@@ -108,13 +111,21 @@ var (
 			Options: options.Index().SetName("playerId"),
 		},
 	}
+
+	experienceTransactionIndexes = []mongo.IndexModel{
+		{
+			Keys:    bson.M{"playerId": 1},
+			Options: options.Index().SetName("playerId"),
+		},
+	}
 )
 
 func (m *mongoRepository) createIndexes(ctx context.Context) {
 	collIndexes := map[*mongo.Collection][]mongo.IndexModel{
-		m.playerCollection:   playerIndexes,
-		m.sessionCollection:  sessionIndexes,
-		m.usernameCollection: usernameIndexes,
+		m.playerCollection:                playerIndexes,
+		m.sessionCollection:               sessionIndexes,
+		m.usernameCollection:              usernameIndexes,
+		m.experienceTransactionCollection: experienceTransactionIndexes,
 	}
 
 	wg := sync.WaitGroup{}

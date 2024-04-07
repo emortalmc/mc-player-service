@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"github.com/emortalmc/proto-specs/gen/go/model/common"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
@@ -216,6 +217,33 @@ func (m *mongoRepository) CreatePlayerUsername(ctx context.Context, username mod
 	defer cancel()
 
 	_, err := m.usernameCollection.InsertOne(ctx, username)
+	return err
+}
+func (m *mongoRepository) AddExperienceToPlayer(ctx context.Context, playerID uuid.UUID, experience int) (int, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	result := m.playerCollection.FindOneAndUpdate(ctx, bson.M{"_id": playerID}, bson.M{"$inc": bson.M{"experience": experience}},
+		options.FindOneAndUpdate().SetReturnDocument(options.After).SetProjection(bson.M{"experience": 1}))
+	if result.Err() != nil {
+		return 0, fmt.Errorf("error adding experience to player: %w", result.Err())
+	}
+
+	var experienceResult struct {
+		Experience int `bson:"experience"`
+	}
+	if err := result.Decode(&experienceResult); err != nil {
+		return 0, fmt.Errorf("error decoding player: %w", err)
+	}
+
+	return experienceResult.Experience, nil
+}
+
+func (m *mongoRepository) CreateExperienceTransaction(ctx context.Context, transaction model.ExperienceTransaction) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	_, err := m.experienceTransactionCollection.InsertOne(ctx, transaction)
 	return err
 }
 

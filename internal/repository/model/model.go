@@ -28,6 +28,8 @@ type Player struct {
 	ActiveBadge *string `bson:"activeBadge,omitempty"`
 
 	CurrentServer *CurrentServer `bson:"currentServer,omitempty"`
+
+	Experience int64 `bson:"experience,omitempty"`
 }
 
 func (p Player) IsEmpty() bool {
@@ -45,6 +47,7 @@ func (p Player) ToProto(session LoginSession) *mcplayer.McPlayer {
 		HistoricPlayTime: durationpb.New(p.TotalPlaytime),
 		CurrentServer:    p.CurrentServer.ToProto(),
 		CurrentSkin:      p.CurrentSkin.ToProto(),
+		Experience:       uint64(p.Experience),
 	}
 }
 
@@ -176,4 +179,11 @@ type PlayerUsername struct {
 	ID       primitive.ObjectID `bson:"_id"`
 	PlayerID uuid.UUID          `bson:"playerId"`
 	Username string             `bson:"username"`
+}
+
+type ExperienceTransaction struct {
+	ID       primitive.ObjectID `bson:"_id"`
+	PlayerID uuid.UUID          `bson:"playerId"`
+	Amount   int64              `bson:"amount"`
+	Reason   string             `bson:"reason"`
 }
