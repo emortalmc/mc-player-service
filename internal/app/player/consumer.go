@@ -14,7 +14,7 @@ func (s *serviceImpl) HandlePlayerConnect(ctx context.Context, time time.Time, p
 
 	session := model.LoginSession{
 		ID:       primitive.NewObjectIDFromTimestamp(time),
-		PlayerID: player.ID,
+		PlayerID: playerID,
 	}
 
 	if err := s.repo.CreateLoginSession(ctx, session); err != nil {
