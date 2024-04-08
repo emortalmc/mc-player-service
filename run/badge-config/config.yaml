@@ -113,6 +113,24 @@ badges:
       lore:
         - "<i:false><gold>Has 2 merged pull requests to EmortalMC repositories</gold>"
 
+  allu:
+    id: allu
+    priority: 650
+    required: false
+    friendlyName: "Allu"
+    chatString: ":)"
+
+    hoverText:
+      - "<gold>Badge: <white>Allu</white></gold>"
+      - ""
+      - "<gold>Turns out begging and bribery works!</gold>"
+
+    guiItem:
+      material: "minecraft:blue_wool" # replace with sunglasses item when added
+      displayName: "<i:false><aqua>Allu</aqua> :)"
+      lore:
+        - "<i:false><gold>Turns out begging and bribery works!</gold>"
+
   cool:
     id: cool
     priority: 700
