@@ -32,7 +32,7 @@ type Service interface {
 
 	// Kafka Handlers
 
-	HandlePlayerSwitchServer(ctx context.Context, playerID uuid.UUID, roleID string,
+	HandlePlayerRolesUpdate(ctx context.Context, playerID uuid.UUID, roleID string,
 		changeType permmsg.PlayerRolesUpdateMessage_ChangeType)
 }
 

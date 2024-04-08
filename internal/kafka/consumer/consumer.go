@@ -131,5 +131,5 @@ func (c *consumer) handlePlayerRolesUpdateMessage(ctx context.Context, _ *kafka.
 		return
 	}
 
-	c.badgeSvc.HandlePlayerSwitchServer(ctx, pID, m.RoleId, m.ChangeType)
+	c.badgeSvc.HandlePlayerRolesUpdate(ctx, pID, m.RoleId, m.ChangeType)
 }

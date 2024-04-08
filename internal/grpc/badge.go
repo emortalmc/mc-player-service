@@ -43,7 +43,7 @@ func (s *badgeService) SetActivePlayerBadge(ctx context.Context, request *pb.Set
 		if errors.Is(err, badge.DoesntHaveBadgeErr) {
 			return nil, setActivePlayerBadgeDoesntHaveBadgeErr
 		} else {
-			return nil, status.Error(codes.Internal, "failed to set active badge")
+			return nil, status.Error(codes.Internal, "failed to set active badge: "+err.Error())
 		}
 	}
 

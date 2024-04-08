@@ -7,7 +7,7 @@ import (
 	"mc-player-service/internal/config"
 )
 
-func (s *serviceImpl) HandlePlayerSwitchServer(ctx context.Context, playerID uuid.UUID, roleID string,
+func (s *serviceImpl) HandlePlayerRolesUpdate(ctx context.Context, playerID uuid.UUID, roleID string,
 	changeType permmsg.PlayerRolesUpdateMessage_ChangeType) {
 
 	var badge *config.Badge
