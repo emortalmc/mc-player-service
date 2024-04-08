@@ -112,7 +112,7 @@ func (s *serviceImpl) RemoveBadgeFromPlayer(ctx context.Context, playerId uuid.U
 		player.ActiveBadge = s.calculateActiveBadge(player.Badges)
 	}
 
-	s.log.Debugw("Updating badge", "playerId", playerId, "badge", player.Badges, "activeBadge", player.ActiveBadge)
+	s.log.Debugw("Updating badge", "playerId", playerId, "badges", player.Badges, "activeBadge", player.ActiveBadge)
 	if err := s.repo.UpdatePlayerBadgesAndActive(ctx, playerId, player.Badges, player.ActiveBadge); err != nil {
 		return fmt.Errorf("failed to update player: %w", err)
 	}

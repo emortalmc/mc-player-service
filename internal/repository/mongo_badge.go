@@ -29,7 +29,7 @@ func (m *mongoRepository) UpdatePlayerBadgesAndActive(ctx context.Context, playe
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	update := bson.M{"$set": bson.M{"badge": badges}}
+	update := bson.M{"$set": bson.M{"badges": badges}}
 	if activeBadge != nil {
 		update["$set"].(bson.M)["activeBadge"] = activeBadge
 	} else {
@@ -49,7 +49,7 @@ func (m *mongoRepository) AddPlayerBadge(ctx context.Context, playerId uuid.UUID
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	result, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": playerId}, bson.M{"$addToSet": bson.M{"badge": badgeId}})
+	result, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": playerId}, bson.M{"$addToSet": bson.M{"badges": badgeId}})
 	if err != nil {
 		return 0, err
 	}
@@ -61,7 +61,7 @@ func (m *mongoRepository) RemovePlayerBadge(ctx context.Context, playerId uuid.U
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	result, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": playerId}, bson.M{"$pull": bson.M{"badge": badgeId}})
+	result, err := m.playerCollection.UpdateOne(ctx, bson.M{"_id": playerId}, bson.M{"$pull": bson.M{"badges": badgeId}})
 	if err != nil {
 		return 0, err
 	}
