@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"log"
 	"mc-player-service/internal/config"
 	"mc-player-service/internal/repository"
 )
@@ -142,6 +143,8 @@ func (s *serviceImpl) SetActiveBadge(ctx context.Context, playerID uuid.UUID, ba
 		return fmt.Errorf("failed to get player badge: %w", err)
 	}
 
+	log.Printf("Looping badges: %+v", player.BadgeIDs)
+	log.Printf("Looking for badge: %s", badgeID)
 	for _, loopBadgeID := range player.BadgeIDs {
 		if loopBadgeID == badgeID {
 			if err := s.repo.SetActivePlayerBadge(ctx, playerID, &badgeID); err != nil {
